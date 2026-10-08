@@ -1,124 +1,74 @@
 # regulation-ledger
 
-> Open-source immutable evidence ledger and legislative snapshot engine for compliance systems.
+Open-source compliance management system with adaptive forms, regulatory templates, and AI-assisted evidence tracking for multi-jurisdiction regulatory compliance.
 
-[English](#english) · [Español](#espa%C3%B1ol)
+[Español](README.es.md)
 
 ---
 
-## English
+## About
 
-`regulation-ledger` is an open-source library and HTTP API for building regulatory compliance systems with verifiable audit trails. The project addresses a concrete problem: organizations that must comply with evolving regulation (tax, labor, environmental, health and safety, data protection) need to demonstrate which law applied to each event or decision at any given date, and that the record cannot be altered after the fact.
+`regulation-ledger` solves a concrete problem: companies face overwhelming regulatory forms that don't match their actual profile — wrong size, risk class, or sector — leading to confusion, non-compliance, and wasted resources.
 
 ### Why this project matters
 
-1. **Continuous audit replaces periodic audit.** Companies spend millions on external audits that could be self-audited continuously with cryptographic proof.
-2. **Regulation changes over time.** Most companies maintain evidence but cannot tell which law applied to a given record on a given date. `regulation-ledger` seals that information together with the evidence.
-3. **Compliance data is sensitive.** Most current solutions are SaaS. `regulation-ledger` is on-premise by design, viable for sectors with strict data residency requirements (health, finance, defense, government).
+1. **Adaptive templates replace one-size-fits-all.** A 5-employee microbusiness and a 500-employee construction company have radically different compliance needs. `regulation-ledger` generates a minimal, relevant form set based on company profile.
 
-### Architecture
+2. **The registry is the product.** Forms live in a versioned JSON Schema registry, extensible by platform owners, MSPs managing multiple clients, and AI agents that generate new forms from raw regulatory text.
+
+3. **Compliance data stays on-premise.** Self-hosted by design. For sectors with strict data residency requirements or organizations that require full control of their evidence trail.
+
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  ledger-api  (Fastify HTTP API, OpenAPI spec)               │
-├─────────────────────────────────────────────────────────────┤
-│  compliance-validate  (declarative rules engine, YAML/JSON) │
-├─────────────────────────────────────────────────────────────┤
-│  regulation-snapshot  (versioned legal constants registry)  │
-├─────────────────────────────────────────────────────────────┤
-│  evidence-core  (hash chain, immutable records, signatures) │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Frontend  (Vue 3 + TypeScript + Pinia + JSONForms)          │
+├──────────────────────────────────────────────────────────────┤
+│  Backend  (Node.js + Fastify + Prisma ORM)                   │
+├──────────────────────────────────────────────────────────────┤
+│  Database  (PostgreSQL + JSONB for form schemas)             │
+├──────────────────────────────────────────────────────────────┤
+│  AI Agent  (DSPy + configurable LLM)                         │
+├──────────────────────────────────────────────────────────────┤
+│  MSP Connector  (REST API + MCP for external agents)          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Modules
+### Core layers
 
-- **evidence-core** — hash chain engine for immutable records. Each record carries timestamp, payload, prev_hash, hash, and signature. Detects tampering. Exports audit trails.
-- **regulation-snapshot** — versioned legal constants registry. Register a norm with its effective dates; query which norm applied to a specific date. Initial domain: Colombian occupational health and safety (Resolución 0312/2019, Decreto 1072/2015, Ley 1562/2012). Architecture open for any regulatory domain.
-- **compliance-validate** — on-device rule engine that runs declarative rules (YAML/JSON) without cloud services. Critical for sensitive data.
-- **ledger-api** — REST API exposing the three libraries above. OpenAPI spec. Docker compose for on-premise deploy.
+- **Form Builder Engine** — Versioned JSON Schema registry with categories and applicability rules (risk class, sector, employee count, jurisdiction). Locked forms protect mandatory regulatory requirements.
+- **Template Engine** — Profile-driven menu generation. Company profile → applicable template → minimal relevant form set. No overload.
+- **Expiration Alerts** — Automatic expiration notifications for documents, certifications, and periodic renewals. Email + dashboard.
+- **AI Agent** — Generates forms from regulatory text. Assists during form filling. Validates cross-norm compliance when regulations change.
+- **MSP Connector** — REST API + MCP server for MSPs managing multiple client companies. Bulk operations, dashboards, external AI agent integration.
 
-### Roadmap (6 months)
+## Core concept
 
-| Milestone | Month | Deliverable |
-|---|---|---|
-| H1: evidence-core v0.1 | 1 | Node/TS library with hash chain + tests + docs |
-| H2: regulation-snapshot v0.1 | 2 | Versioned legal constants + SST seed data |
-| H3: integration + compliance-validate v0.1 | 3 | Library integration + declarative rules engine |
-| H4: ledger-api v0.1 | 4 | Fastify HTTP API + OpenAPI + Docker compose |
-| H5: docs + landing + demo | 5 | Bilingual README, technical docs, landing page, public demo |
-| H6: public release + community | 6 | GitHub v1.0 release, CONTRIBUTING.md, first external issue processed |
+Forms follow company profile:
 
-### Use case: Colombian SST
+```
+Company Profile {
+  risk_class: "III"
+  sector: "construction"     // CIIU code
+  employees: 45
+  jurisdiction: "CO"
+}
+  → Template: "large-enterprise-construction"
+  → Forms: 18 relevant forms (from ~30 total registry)
+  → Menu: only what applies
+```
 
-600,000+ Colombian companies must comply with Decreto 1072/2015 and Resolución 0312/2019 for Occupational Health and Safety Management Systems (SG-SST). Today, evidence is scattered in local folders, loose PDFs, with no cryptographic traceability. With `regulation-ledger`, each event (training, medical exam, internal audit) generates an immutable record with the applicable law sealed.
+## Documentation
 
-### License
+Full technical documentation: [`docs/en/`](docs/en/)
 
-**Mozilla Public License 2.0 (MPL-2.0).** Permits commercial use, modification, and redistribution, with the condition that improvements to MPL-licensed files be made available under the same license. Same license used by Mozilla for Firefox and other tools.
+## License
 
-### Status
+**Mozilla Public License 2.0 (MPL-2.0).** Permits commercial use, modification, and redistribution. Same license as Mozilla Firefox.
 
-- Repository: skeleton (October 2026)
+## Status
+
+- Repository: active development (October 2026)
 - Production: no
-- Funding: pending open-source grants and community sponsorship application
-- Maintainer: [Yaqui Martinez](https://github.com/mono079790-lab) (persona natural, Colombia)
-
----
-
-## Español
-
-`regulation-ledger` es una librería y API HTTP open source para construir sistemas de cumplimiento regulatorio con auditorías verificables. El proyecto resuelve un problema concreto: las organizaciones que deben cumplir regulación cambiante (tributaria, laboral, ambiental, sanitaria, de protección de datos) necesitan demostrar qué norma aplicaba a cada evento o decisión en una fecha dada, y que el registro no pueda ser alterado después.
-
-### Por qué importa este proyecto
-
-1. **Auditoría continua reemplaza auditoría periódica.** Las empresas gastan millones en auditorías externas que podrían auto-auditarse continuamente con prueba criptográfica.
-2. **La regulación cambia con el tiempo.** La mayoría de empresas mantienen evidencia pero no pueden decir qué ley aplicaba a un registro en una fecha dada. `regulation-ledger` sella esa información con la evidencia.
-3. **Los datos de compliance son sensibles.** La mayoría de soluciones actuales son SaaS. `regulation-ledger` es on-premise por diseño, viable para sectores con requisitos estrictos de residencia de datos (salud, financiero, defensa, gobierno).
-
-### Arquitectura
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ledger-api  (API HTTP con Fastify, spec OpenAPI)            │
-├─────────────────────────────────────────────────────────────┤
-│  compliance-validate  (motor de reglas declarativas YAML/JSON)│
-├─────────────────────────────────────────────────────────────┤
-│  regulation-snapshot  (registro versionado de constantes    │
-│                         legales)                            │
-├─────────────────────────────────────────────────────────────┤
-│  evidence-core  (hash chain, registros inmutables, firmas)  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Módulos
-
-- **evidence-core** — motor de hash chain para registros inmutables. Cada registro lleva timestamp, payload, prev_hash, hash y firma. Detecta manipulación. Exporta audit trails.
-- **regulation-snapshot** — registro versionado de constantes legales. Registra una norma con sus fechas de vigencia; consulta qué norma aplicaba a una fecha específica. Dominio inicial: seguridad y salud en el trabajo colombiana (Resolución 0312/2019, Decreto 1072/2015, Ley 1562/2012). Arquitectura abierta para cualquier dominio regulatorio.
-- **compliance-validate** — motor de validación on-device que ejecuta reglas declarativas (YAML/JSON) sin servicios cloud. Crítico para datos sensibles.
-- **ledger-api** — API REST que expone las tres librerías anteriores. Spec OpenAPI. Docker compose para deploy on-premise.
-
-### Roadmap (6 meses)
-
-| Hito | Mes | Entregable |
-|---|---|---|
-| H1: evidence-core v0.1 | 1 | Librería Node/TS con hash chain + tests + docs |
-| H2: regulation-snapshot v0.1 | 2 | Constantes legales versionadas + seed data SST |
-| H3: integration + compliance-validate v0.1 | 3 | Integración de librerías + motor de reglas declarativas |
-| H4: ledger-api v0.1 | 4 | API HTTP Fastify + OpenAPI + Docker compose |
-| H5: docs + landing + demo | 5 | README bilingüe, docs técnicas, landing page, demo pública |
-| H6: release público + comunidad | 6 | GitHub v1.0 release, CONTRIBUTING.md, primer issue externo procesado |
-
-### Caso de uso: SST colombiana
-
-Más de 600.000 empresas colombianas deben cumplir el Decreto 1072/2015 y la Resolución 0312/2019 para el Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST). Hoy, la evidencia está dispersa en carpetas locales, PDFs sueltos, sin trazabilidad criptográfica. Con `regulation-ledger`, cada evento (capacitación, examen médico, auditoría interna) genera un registro inmutable con la norma aplicable sellada.
-
-### Licencia
-
-**Mozilla Public License 2.0 (MPL-2.0).** Permite uso comercial, modificación y redistribución, con la condición de que las mejoras a archivos bajo MPL se pongan a disposición bajo la misma licencia. Misma licencia que usa Mozilla para Firefox y otras herramientas.
-
-### Estado
-
-- Repositorio: esqueleto (octubre 2026)
-- Producción: no
-- Financiación: abierta a grants open source y sponsorship comunitario
+- Funding: pursuing open-source grants and community sponsorship
 - Maintainer: [Yaqui Martinez](https://github.com/mono079790-lab) (persona natural, Colombia)

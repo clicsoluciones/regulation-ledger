@@ -1,0 +1,43 @@
+{
+  "name": "regulation-ledger",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Open-source immutable evidence ledger and legislative snapshot engine for compliance systems.",
+  "type": "module",
+  "license": "MPL-2.0",
+  "author": {
+    "name": "Yaqui Martinez",
+    "email": "yaquimartinez@gmail.com"
+  },
+  "homepage": "https://github.com/clicsoluciones/regulation-ledger",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clicsoluciones/regulation-ledger.git"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "compliance",
+    "audit",
+    "regulation",
+    "immutable",
+    "evidence",
+    "hash-chain",
+    "legislative-snapshot",
+    "occupational-health",
+    "sst",
+    "colombia",
+    "open-source",
+    "mpl-2.0"
+  ]
+}

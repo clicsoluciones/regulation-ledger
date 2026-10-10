@@ -70,5 +70,5 @@ Documentación técnica completa en [`docs/es/`](docs/es/).
 
 - Repositorio: desarrollo activo (octubre 2026)
 - Producción: no
-- Financiación: abierta a grants open source y sponsorship comunitario
+- Financiación: abierta a grants open source y sponsorship comunitario (detalles en el roadmap del maintainer)
 - Maintainer: [Yaqui Martinez](https://github.com/mono079790-lab) (persona natural, Colombia)

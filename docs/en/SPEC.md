@@ -1,7 +1,8 @@
 # Regulation Ledger — Technical Specification
 
-> Version: 0.1.0-draft
-> Date: 08-oct-2026
+> Version: 0.2.0-draft
+> Date: 10-oct-2026
+> Changelog v0.2: Architectural decisions closed with external research (section 5) and 6 pending items in section 6 updated (section 6).
 > Author: Yaqui Martinez
 > Status: Draft — research in progress
 
@@ -560,23 +561,121 @@ to regulation-ledger to build forms automatically.
 
 ---
 
-## 5. Open Architectural Decisions
+## 5. Closed Architectural Decisions (v0.2)
 
-| Question | Options | Recommendation | Status |
-|----------|---------|---------------|--------|
-| DB schema or tenant_id? | Separate schema vs. tenant_id in each table | tenant_id (simpler) | Pending |
-| JSONForms Vue or alternative? | JSONForms vs. custom Vue | JSONForms (JSON Schema standard) | Pending |
-| AI as service or self-hosted? | OpenAI API vs. Ollama | Configurable both | Pending |
-| Webhook for alerts or job polling? | External webhook vs. internal cron | Job polling (simpler initially) | Pending |
-| MCP or REST for external agent? | MCP vs. REST | REST first, MCP later | Pending |
+> Decisions taken after external research. Citations included where applicable.
+
+### 5.1 Multi-tenancy: shared schema with `tenant_id` + Row-Level Security (RLS)
+
+**Decision:** Shared schema with `tenant_id` column in every table, **enforced by PostgreSQL RLS** (not just application convention).
+
+**Evidence:**
+- 2025-2026 consensus (Streamkap, AWS, dev.to, Supabase): "For the vast majority of modern SaaS applications, the shared-schema model using a `tenant_id` column is the way to go. It provides the clearest path to scalability and cost savings." [streamkap.com](https://streamkap.com/resources-and-guides/postgresql-cdc-multi-tenant)
+- RLS in PostgreSQL is production-grade: AWS demonstrates cross-tenant writes return `UPDATE 0` when the policy blocks them, no additional code required if you don't rely on convention. [aws.amazon.com](https://aws.amazon.com/blogs/database/multi-tenant-data-isolation-with-postgresql-row-level-security/)
+- Honest trade-off: schema-per-tenant produces 100K instances impossible to operate; shared schema scales, RLS protects.
+
+**Canonical implementation:**
+```sql
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE companies FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON companies
+  USING (tenant_id = current_setting('app.current_tenant')::uuid);
+```
+Every request sets `SET LOCAL app.current_tenant = '<uuid>'` before executing. Without manual exception, no leaks.
+
+**Tables with `tenant_id`:** companies, company_forms, form_submissions, vencimientos, alerts.
+**Global tables (no `tenant_id`):** form_definitions, categories, templates, form_versions (global registry, readable by all tenants).
+
+### 5.2 Form renderer: JSONForms Vue
+
+**Decision:** JSONForms Vue (`@jsonforms/vue`), not react-jsonschema-form (rjsf).
+
+**Change from SPEC v0.1 recommendation:** SPEC v0.1 said "rjsf, more popular". That was incorrect: rjsf **is React-only**. The recommendation is invalidated because the stack is already defined as Vue 3.
+
+**Evidence:**
+- rjsf issue [#4482](https://github.com/rjsf-team/react-jsonschema-form/issues/4482) (official maintainers): "You may just want to build a new system called Vue Json Schema Form" — there is no official Vue version of rjsf.
+- JSONForms Vue 3.8.0 (jun-2026): first-class, MIT, official Vue 3 bindings, same core as React/Angular. [eclipsesource/jsonforms](https://github.com/eclipsesource/jsonforms)
+- JSONForms Community: "focuses on customizability and declarative forms. JSON Schema + UI Schema." [jsonforms discourse](https://jsonforms.discourse.group/t/compare-to-react-jsonschema-form/553)
+- Comparison 2026: rjsf 900K weekly downloads (more popular), JSONForms 238K (more customizable). Both MIT. [faun.dev](https://faun.dev/toolbox/json-forms-vs-react-jsonschema-form/)
+
+**Trade-off:** JSONForms sometimes requires custom renderers when a field doesn't fit the default sets (e.g. legal matrix fields in SST). Worth it for native Vue 3.
+
+**Implementation:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` to start, `@jsonforms/vue-vuetify` if we want Vuetify as the design system.
+
+### 5.3 AI Agent: DSPy as core, LangChain optional for tooling
+
+**Decision:** DSPy for the internal agent (form generation, assistance, cross-validation). LangChain/LangGraph discarded as core (overhead, integration is not our bottleneck).
+
+**Evidence:**
+- DSPy is a compiler for prompts: you declare `Signature` + `Module`, the optimizer (`MIPROv2`) automatically searches for instructions and adapts to model changes. [randomcommits.com](https://randomcommits.com/dspy-vs-langchain)
+- Real case (randomcommits): they switched gpt-3.5 → gpt-4-turbo and all 50 LangChain chains failed because prompts were hardcoded strings. DSPy re-compiles automatically.
+- Benchmark case: 0.83 → 0.90 exact-match when migrating to DSPy in multi-category classification. Cost: $12 of compile, 30 min.
+- "DSPy vs LangChain are not the same layer. DSPy optimizes the prompt given a dataset. LangChain connects providers + tools + retrievers." [tinyagents.dev](https://tinyagents.dev/vs/dspy-vs-langchain)
+- Our use case = agent that generates JSON Schema from regulatory text. We have a dataset (Decree/Resolution texts), we have a metric (valid schema + covered fields). **DSPy fits perfectly.**
+- LangChain would only be justified if we needed connectors to 600+ external tools. Not our case.
+
+**Decision rule:** if in the future we want an external agent (LaserBeam/MCP) to build forms in regulation-ledger, we expose LangChain tool-calls or a simple REST API. But the internal agent is DSPy.
+
+### 5.4 AI inference: configurable cloud + self-hosted, default self-hosted for sensitive data
+
+**Decision:** neutral architecture with **Ollama self-hosted as default**, OpenAI/Anthropic optional.
+
+**Cost evidence (September 2026):**
+| Volume | OpenAI GPT-5.6 Luna | Ollama rented (RTX 4090) | Ollama owned |
+|---|---|---|---|
+| 5M tokens/month | ~$2.50 | ~$6 | ~$97 (capex) |
+| 100M tokens/month | ~$50 | ~$121 | ~$115 |
+| 1B tokens/month | ~$800 | ~$1,207 | — |
+
+[markaicode.com / sept 2026](https://markaicode.com/pricing/ollama-vs-openai-api-pricing)
+
+**Reading:** Self-host rented **never wins** vs OpenAI cheapest. Self-host owned **only wins above ~100M tokens/month**. For regulation-ledger (SST audit, Colombian regulations), the bottleneck is compliance, not throughput. Use cheap cloud (GPT-5.6 Luna, $0.50/1M blended) up to ~100M tokens/month, then self-host if adoption justifies it.
+
+**Privacy:** Ollama local = data never leaves the host. Compatible with Colombian regulations (Ley 1581 Habeas Data). OpenAI/Anthropic cloud = requires DPA + jurisdiction evaluation.
+
+**Operational recommendation:**
+1. MVP default: Ollama local with open model (Llama 3.1 8B or similar) for zero cloud dependency.
+2. Enterprise client requesting large models: OpenAI/Anthropic via API, configurable in `config.yaml`.
+3. Documented as "Self-hosted default, configurable to cloud" in `.env.example`.
+
+### 5.5 Expiration alerts: daily cron polling + `vencimientos` table
+
+**Decision:** keeps the polling job from SPEC v0.1 (line 286-302). No external webhook.
+
+**Evidence:**
+- Cron polling for recurring tasks at fixed cadence is the ideal case. "Cron is fine for recurring system tasks like cache warming, report generation, and log rotation. It runs on a fixed cadence and does its job well." [posthook.io](https://posthook.io/compare/cron-vs-durable-scheduling)
+- If your work is "execute this SQL every hour at midnight", cron is the answer. Webhooks make sense when the event producer triggers the notification (doesn't apply for time-dependent expirations).
+- Limitation to watch: "every concern gets its own polling query and its own cron job. At five or ten concerns, you have a growing set of pollers." If regulation-ledger reaches many alert types, reconsider. For now: 1 poller (expirations) is trivial.
+
+**Added monitoring posture:** cron doesn't have alerting by default. If the job fails silently, nobody finds out. **Add a health-check endpoint in ledger-api that returns `last_cron_run_at`** and Prometheus metrics to alert if the job doesn't run in 24h+5min.
+
+### 5.6 External agent: REST API first, MCP server in V2.1
+
+**Decision:** keeps from SPEC v0.1: REST API as MSP/AI connector in V2.1, MCP server in a later phase.
+
+**Evidence (landscape changed since oct-2025):**
+- MCP spec v2025-11-25 is already stable, OAuth 2.0 Resource Server compliance, enterprise support. [modelcontextprotocol.info](https://modelcontextprotocol.info/blog/first-mcp-anniversary)
+- IBM App Connect 13.0.8 production-ready: "expose your REST APIs as MCP tools without code changes". [ibm.com](https://www.ibm.com/docs/en/app-connect/13.0.x?topic=solutions-developing-mcp-tools)
+- REST remains the practical initial choice: "REST first, MCP later" still holds because REST covers 100% of MSP cases, and "exposing REST as MCP tools" is trivial when desired.
+
+**Corrected stance:** instead of "REST first, MCP later", the closed decision is **REST for V2.0 (MSP connector), MCP as thin adapter over REST in V2.1**. The MCP spec v2025-11-25 is stable; adding it as a wrapper is 1 sprint of work, not a month.
 
 ---
 
-## 6. Pending Research
+## 6. Pending Tasks (v0.2)
 
-- [ ] Deepen specific expirations (fire extinguisher checks, ladders — exact periodicity)
-- [ ] Exact CIIU code listing by sector
-- [ ] Research templates in other countries (MX: NOM-035, PE: RM)
-- [ ] Evaluate DSPy vs LangChain for AI agent
-- [ ] Compare Ollama self-hosted vs. OpenAI API cost/benefit
-- [ ] Evaluate Form.io vs JSONForms for MSP use case
+> Tasks marked ✅ are resolved in section 5.
+
+### Closed research
+
+- ✅ [x] Evaluate rjsf vs JSONForms — **resolved in 5.2: JSONForms Vue**
+- ✅ [x] Evaluate DSPy vs LangChain — **resolved in 5.3: DSPy as core**
+- ✅ [x] Compare Ollama self-hosted vs. OpenAI API cost/benefit — **resolved in 5.4**
+- ✅ [x] Evaluate Form.io vs JSONForms for MSP use case — **resolved in 5.2: rjsf discarded because it doesn't support Vue. Form.io not considered.**
+
+### Open research
+
+- [ ] Deepen specific expirations (fire extinguisher checks, ladders — exact periodicity). Action: consolidate the expirations table with references to NFPA, Icontec, and sector-specific regulations.
+- [ ] Exact CIIU code listing by sector. Action: extract CIIUs associated with each sector (construction, health, manufacturing, industrial) from the DANE activities table.
+- [ ] Research templates in other countries (MX: NOM-035, PE: RM). Action: evaluate whether Mexican NOM-035 (psychosocial factors), STPS, and Peruvian RM-Numeral regulations apply to the templates architecture, or are vertical-specific for future expansion.
+- [ ] Cron operational monitoring. Action: implement `GET /health/cron` endpoint that returns `last_cron_run_at` and configure Prometheus alert if it exceeds 24h+5min. (Derived from 5.5)

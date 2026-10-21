@@ -1,10 +1,10 @@
 # Regulation Ledger — Especificación Técnica
 
-> Versión: 0.2.0-draft
+> Versión: 0.2.0
 > Fecha: 10-oct-2026
-> Changelog v0.2: Decisiones arquitectónicas cerradas con investigación externa (sección 5) y 6 items pendientes de la sección 6 actualizados (sección 6).
+> Changelog v0.2: Decisiones arquitectónicas cerradas (sección 5) y estado de la sección 6 actualizado.
 > Autor: Yaqui Martinez
-> Estado: Borrador — investigación en curso
+> Estado: Especificación técnica pública
 
 ---
 
@@ -509,9 +509,9 @@ a regulation-ledger para construir formularios automáticamente.
 
 | Capa | Tecnología | Justificación |
 |------|-----------|---------------|
-| Frontend | Vue 3 + TypeScript | Superficie de ataque pequena, tipado estricto, ecosistema de formularios maduro |
+| Frontend | Vue 3 + TypeScript | Menor superficie de ataque, tipado estricto, ecosistema deformularios maduro |
 | Estado | Pinia | State management Vue 3 |
-| Backend | Node.js + Express o Fastify | Runtime unico para API y jobs, despliegue self-hosted simple |
+| Backend | Node.js + Express o Fastify | Runtime único para API y jobs, despliegue self-hosted simple |
 | Base de datos | PostgreSQL + JSONB | Datos estructurados + schemas flexibles |
 | ORM | Prisma | Type-safe, migrations, multi-tenant |
 | Auth | Lucia | Multi-tenant con roles, self-hosted |

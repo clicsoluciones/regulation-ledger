@@ -1,117 +1,95 @@
-# Roadmap
+# Roadmap — Regulation Ledger
 
-This document details the 6-month roadmap for `regulation-ledger`. Each milestone has verifiable success criteria.
+## Estrategia central
 
-## H1: evidence-core v0.1 (Month 1 — October 2026)
+Desarrollo basado en **Form Builder Engine** (registry de JSON Schema versionado) y **Templates por compañía** (menú adaptativo desde perfil de empresa).
 
-**Goal:** Hash chain engine for immutable records.
+---
 
-**Deliverables:**
-- TypeScript library with strict typing
-- `EvidenceRecord` data model
-- `appendEvidence()` with prev_hash validation
-- `verifyChain()` with tampering detection
-- `exportAuditTrail()` in JSON and CSV
-- Unit tests with >80% coverage
-- README with usage examples
+## Fase 1: Foundation — Mes 1-2
 
-**Success criteria:**
-- `npm run test` passes with >80% coverage
-- README example runs end-to-end
-- API surface matches `docs/architecture.md` Layer 1
+**Meta:** Form Builder Engine funcional con registry de JSON Schema.
 
-## H2: regulation-snapshot v0.1 (Month 2 — November 2026)
+### Entregables
+- Prisma schema: `Form`, `FormVersion`, `FormCategory`, `Company`, `CompanyProfile`
+- API REST: CRUD de formularios y versiones
+- JSONForms Vue renderer conectado al registry
+- Sistema de categorías y tags por formulario
+- Formularios bloqueados (no eliminables, solo versionables)
 
-**Goal:** Versioned legal constants registry.
+### Criterio de éxito
+Un formulario dinámico renderizado desde JSON Schema en Vue 3 sin código nuevo por formulario.
 
-**Deliverables:**
-- `LegalConstant` data model
-- `registerConstant()` with overlap detection
-- `getConstantsForDate()` with timezone handling
-- `getConstantHistory()` for audit purposes
-- Seed data: 5 key Colombian SST norms (Resolución 0312/2019, Decreto 1072/2015, Ley 1562/2012, Decreto 1295/1994, Circular 008/2019)
-- Unit tests + integration tests with `evidence-core`
-- README with examples
+---
 
-**Success criteria:**
-- For dates 2020-2025, `getConstantsForDate()` returns the correct norm in force on that date
-- Integration with `evidence-core` works end-to-end
-- Seed data validates against `LegalConstant` schema
+## Fase 2: Company Profiles + Wizard — Mes 2-3
 
-## H3: integration + compliance-validate v0.1 (Month 3 — December 2026)
+**Meta:** Wizard de configuración que genera el menú adaptativo.
 
-**Goal:** Rule engine + library integration.
+### Entregables
+- Wizard de 7 pasos (empresa, sedes, áreas, responsables, clasificación)
+- CompanyProfile: `clase_riesgo`, `sector_ciiu`, `num_empleados`, `jurisdiccion`
+- Template Engine: perfil → template aplicable → menú de formularios
+- CRUD de companies y profiles
+- Permisos y roles por empresa
 
-**Deliverables:**
-- YAML/JSON rule parser
-- 5 pre-loaded SST validation rules (training date validity, medical exam periodicity, committee composition, etc.)
-- CLI for running validations: `regulation-ledger validate <record> <rules>`
-- Integration tests covering all 4 modules together
-- README with rule authoring guide
+### Criterio de éxito
+Empresa creada → menú muestra solo los formularios que le aplican según su perfil.
 
-**Success criteria:**
-- 5 sample rules execute correctly via CLI
-- Integration tests pass
-- Rule authoring guide is clear enough for a non-author to write a new rule
+---
 
-## H4: ledger-api v0.1 (Month 4 — January 2027)
+## Fase 3: Sistema de Vencimientos — Mes 3-4
 
-**Goal:** HTTP API + Docker deployment.
+**Meta:** Alertas automáticas de expiración documental.
 
-**Deliverables:**
-- Fastify server with all endpoints from `docs/architecture.md` Layer 4
-- OpenAPI 3.0 spec auto-generated
-- Docker compose for on-premise deploy
-- Optional API key authentication
-- Integration tests via HTTP
+### Entregables
+- Tabla de frecuencias normativas (anual, mensual, trimestral)
+- Cron job que calcula próximas expiraciones
+- Notificaciones por email
+- Dashboard de vencimientos pendientes
+- Historial de renovaciones
 
-**Success criteria:**
-- `docker compose up` brings up the API and persistent storage
-- 3 endpoints documented in OpenAPI spec
-- API tests pass via HTTP client
-- Response time <100ms for single-record operations
+### Criterio de éxito
+El sistema alerta antes de que venza un documento o certificación.
 
-## H5: docs + landing + demo (Month 5 — February 2027)
+---
 
-**Goal:** Public-facing materials.
+## Fase 4: Agente IA — Mes 4-5
 
-**Deliverables:**
-- Bilingual README (Spanish + English)
-- Technical documentation generated from TypeScript types
-- Static landing page at `regulation-ledger.org`
-- Public demo deployed to a free hosting service (fly.io, Railway, or similar)
-- 5-minute demo video showing the use case
+**Meta:** Asistencia IA durante diligenciamiento y generación de formularios.
 
-**Success criteria:**
-- Landing page accessible at `regulation-ledger.org`
-- Demo allows anonymous users to try basic operations
-- Demo video published and linked from README
-- All docs available in Spanish and English
+### Entregables
+- DSPy integrado con LLM configurable (OpenAI / Ollama)
+- Generación de formularios desde texto normativo bruto
+- Asistencia durante el diligenciamiento (suggestions)
+- Validación cruzada cuando cambian las normas
+- Detección de formularios obsoletos o reemplazados
 
-## H6: public release + community (Month 6 — March 2027)
+### Criterio de éxito
+Un formulario nuevo generado desde un texto de ley en menos de 5 minutos.
 
-**Goal:** Production-ready v1.0 + community onboarding.
+---
 
-**Deliverables:**
-- GitHub v1.0 release
-- `CONTRIBUTING.md` with development setup
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md` with vulnerability disclosure policy
-- Issue templates (bug report, feature request, question)
-- First external issue processed end-to-end
-- Blog post published on dev.to or similar
-- Submission to awesome-open-source lists relevant to compliance
+## Fase 5: Conector MSP — Mes 5-6
 
-**Success criteria:**
-- GitHub v1.0 release tag exists
-- At least 1 external issue has been responded to and resolved
-- README links to published blog post
-- Project appears in at least 1 awesome-open-source list
+**Meta:** API para MSPs que gestionan múltiples empresas cliente.
 
-## Stretch goals (post-grant)
+### Entregables
+- API REST con autenticación por API key
+- Servidor MCP para agentes IA externos
+- Dashboard MSP: todas las empresas cliente, métricas agregadas
+- Operaciones en masa (crear empresa, asignar template, importar datos)
+- Webhooks para notificaciones externas
 
-- Web UI for non-technical users (form-based record creation)
-- Integration with government APIs (e.g. Colombian Ministerio del Trabajo)
-- Multi-language support beyond Spanish/English
-- Compliance templates for additional regulatory domains (RGPD, SOX, HIPAA)
-- Optional cloud mode for organizations without on-premise capability
+### Criterio de éxito
+Un MSP gestiona 50 empresas desde una sola API.
+
+---
+
+## Hitos del roadmap
+
+| Fecha | Hito |
+|-------|------|
+| mes 2 | Form Builder funcional + wizard |
+| mes 4 | Vencimientos + IA básica |
+| mes 6 | Conector MSP + demo pública |

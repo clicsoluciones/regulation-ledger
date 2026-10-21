@@ -1,10 +1,10 @@
 # Regulation Ledger — Technical Specification
 
-> Version: 0.2.0-draft
+> Version: 0.2.0
 > Date: 10-oct-2026
-> Changelog v0.2: Architectural decisions closed with external research (section 5) and 6 pending items in section 6 updated (section 6).
+> Changelog v0.2: Architectural decisions closed (section 5) and section 6 status updated.
 > Author: Yaqui Martinez
-> Status: Draft — research in progress
+> Status: Public technical specification
 
 ---
 

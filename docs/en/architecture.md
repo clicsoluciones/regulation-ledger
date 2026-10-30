@@ -7,8 +7,9 @@
 The foundation. Provides the data model and primitives for creating immutable records with cryptographic integrity.
 
 **Data model:**
+```
 
-```typescript
+typescript
 interface EvidenceRecord {
   id: string;                 // UUID v4
   timestamp: string;          // ISO 8601 with timezone
@@ -22,19 +23,20 @@ interface EvidenceRecord {
 
 **API surface:**
 
-- `appendEvidence(record): EvidenceRecord` — validates encadenamiento, computes hash, returns appended record.
-- `verifyChain(records): { valid: boolean; brokenAt?: number }` — detects tampering.
-- `exportAuditTrail(records, format): Buffer` — exports to JSON, CSV, or PDF.
-- `signRecord(record, privateKey): EvidenceRecord` — adds Ed25519 signature.
-- `verifySignature(record, publicKey): boolean` — verifies Ed25519 signature.
+- `appendEvidence(record): EvidenceRecord`, validates encadenamiento, computes hash, returns appended record.
+- `verifyChain(records): { valid: boolean; brokenAt?: number }`, detects tampering.
+- `exportAuditTrail(records, format): Buffer`, exports to JSON, CSV, or PDF.
+- `signRecord(record, privateKey): EvidenceRecord`, adds Ed25519 signature.
+- `verifySignature(record, publicKey): boolean`, verifies Ed25519 signature.
 
 ## Layer 2: `regulation-snapshot`
 
 Versioned registry of legal constants. A norm has an effective_from and optional effective_to date. The system can answer "what was the value of constant X on date Y in domain Z".
 
 **Data model:**
+```
 
-```typescript
+typescript
 interface LegalConstant {
   id: string;
   domain: string;             // e.g. "sst.colombia"
@@ -44,24 +46,25 @@ interface LegalConstant {
   effective_to?: string;      // ISO date, undefined = still in force
   source_url?: string;        // URL to official publication
   source_title?: string;      // e.g. "Resolución 0312/2019"
-  jurisdiction: string;       // e.g. "CO", "EU", "US-CA"
+  jurisdiction: string;       // e.g. "CO", "EU", "MX"
 }
 ```
 
 **API surface:**
 
-- `registerConstant(constant): void` — adds to registry, fails if overlaps with existing.
-- `getConstantsForDate(domain, date, jurisdiction?): LegalConstant[]` — returns all constants effective on a given date.
-- `getConstantHistory(domain, key): LegalConstant[]` — returns all versions of a constant over time.
-- `attachLegislationToRecord(record, constants): EvidenceRecord` — extends an evidence-core record with the applicable law snapshot.
+- `registerConstant(constant): void`, adds to registry, fails if overlaps with existing.
+- `getConstantsForDate(domain, date, jurisdiction?): LegalConstant[]`, returns all constants effective on a given date.
+- `getConstantHistory(domain, key): LegalConstant[]`, returns all versions of a constant over time.
+- `attachLegislationToRecord(record, constants): EvidenceRecord`, extends an evidence-core record with the applicable law snapshot.
 
 ## Layer 3: `compliance-validate`
 
 Declarative rules engine. Rules are YAML or JSON files describing conditions. The engine evaluates a record (or set of records) against the rules and produces a compliance report.
 
 **Rule example:**
+```
 
-```yaml
+yaml
 id: sst.training.has_valid_date
 domain: sst.colombia
 severity: error
@@ -75,10 +78,10 @@ source: "Resolución 0312/2019 Art. 18"
 
 **API surface:**
 
-- `loadRules(rulesPath): Rule[]` — loads from file or directory.
-- `validate(record, rules): ComplianceReport` — returns a structured report.
-- `validateBatch(records, rules): ComplianceReport[]` — bulk validation.
-- `exportReport(report, format): Buffer` — JSON, PDF, or HTML.
+- `loadRules(rulesPath): Rule[]`, loads from file or directory.
+- `validate(record, rules): ComplianceReport`, returns a structured report.
+- `validateBatch(records, rules): ComplianceReport[]`, bulk validation.
+- `exportReport(report, format): Buffer`, JSON, PDF, or HTML.
 
 ## Layer 4: `ledger-api`
 
@@ -86,19 +89,18 @@ HTTP API exposing the three libraries above. Built on Fastify for performance an
 
 **Endpoints (planned v0.1):**
 
-- `POST /evidence` — append a new evidence record.
-- `GET /evidence/:id` — retrieve a record by id.
-- `GET /evidence/verify?from=...&to=...` — verify a chain segment.
-- `GET /snapshot/:domain?date=...&jurisdiction=...` — get applicable law snapshot.
-- `POST /validate` — run compliance validation.
-- `GET /health` — health check.
+- `POST /evidence`, append a new evidence record.
+- `GET /evidence/:id`, retrieve a record by id.
+- `GET /evidence/verify?from=...&to=...`, verify a chain segment.
+- `GET /snapshot/:domain?date=...&jurisdiction=...`, get applicable law snapshot.
+- `POST /validate`, run compliance validation.
+- `GET /health`, health check.
 
 **Deployment:**
 
 Docker compose for on-premise deploy. Single binary or container + persistent volume for the registry.
 
 ## Data flow example
-
 ```
 User uploads training event
         │

@@ -1,4 +1,4 @@
-# Regulation Ledger — Technical Specification
+# Regulation Ledger, Technical Specification
 
 > Version: 0.2.0
 > Date: 10-oct-2026
@@ -14,12 +14,12 @@
 
 Current SG-SST tools on the market present excessive cognitive load for end users. Companies receive tools with too many irrelevant modules for their specific profile, generating:
 
-- **Excessive cognitive load** → frustration → system abandonment
+- **Excessive cognitive load** -> frustration -> system abandonment
 - **Irrelevant modules** that don't apply based on company size, sector, or risk class
 - **Operational overload** without tangible reduction in actual risk
 - **Confusing experience** for users without prior regulatory knowledge
 
-The correct architecture starts from: company profile → templates → minimal viable menu.
+The correct architecture starts from: company profile -> templates -> minimal viable menu.
 
 ### 1.2 What Colombian law actually requires
 
@@ -67,14 +67,13 @@ Not 113 forms. Approximately 30 unique forms organized by the PHVA cycle (Decret
 
 ### 2.1 Core philosophy
 
-> **The product is not the form. It is the registry + template engine + AI agent.**
+> **The product is not the form. It is the registry and the template engine.**
 > Forms are a consequence, not the product.
 
 Three independent layers:
-
 ```
 ┌─────────────────────────────────────────────────┐
-│  AI AGENT — Construction and assistance          │
+│  EVIDENCE AND SNAPSHOTS — Verifiable record      │
 ├─────────────────────────────────────────────────┤
 │  TEMPLATE ENGINE — Adaptive menu by profile      │
 ├─────────────────────────────────────────────────┤
@@ -83,19 +82,20 @@ Three independent layers:
 └─────────────────────────────────────────────────┘
 ```
 
-### 2.2 Block 1 — Form Builder Engine
+### 2.2 Block 1, Form Builder Engine
 
 **Responsibility:** Store and serve form definitions as pure JSON Schema.
 
 **Technology base:**
-- **JSONForms Vue** — JSON Schema standard renderer for Vue 3
+- **JSONForms Vue**, JSON Schema standard renderer for Vue 3
 - **Storage:** PostgreSQL with JSONB for schemas
 
 **Do not reinvent the wheel.** Use an established library and store schemas in the DB.
 
 #### Form registry
+```
 
-```typescript
+typescript
 interface FormDefinition {
   id: string;                    // UUID
   slug: string;                  // "initial-evaluation-sst"
@@ -133,8 +133,9 @@ interface FormDefinition {
 ```
 
 #### Categories registry
+```
 
-```typescript
+typescript
 interface Category {
   id: string;
   slug: string;                 // "compliance"
@@ -162,13 +163,14 @@ interface Category {
 - emergencies
 - configuration
 
-### 2.3 Block 2 — Wizard + Template Engine
+### 2.3 Block 2, Wizard + Template Engine
 
 **Responsibility:** Generate the applicable form menu based on the company profile.
 
 #### Company profile
+```
 
-```typescript
+typescript
 interface CompanyProfile {
   id: string;
   name: string;
@@ -197,8 +199,9 @@ interface CompanyProfile {
 ```
 
 #### Templates
+```
 
-```typescript
+typescript
 interface Template {
   id: string;
   slug: string;                 // "sme-risk-i-ii"
@@ -247,8 +250,9 @@ interface WizardStep {
 | industrial | risk IV-V, industrial sector | +All |
 
 #### Template engine
+```
 
-```typescript
+typescript
 function getApplicableTemplate(profile: CompanyProfile): Template {
   // 1. Search exact match by profile
   // 2. If no exact match, search by risk_class
@@ -266,11 +270,12 @@ function getFormsForProfile(profile: CompanyProfile): FormDefinition[] {
 }
 ```
 
-### 2.4 Block 3 — Expiration Alerts System
+### 2.4 Block 3, Expiration Alerts System
 
 **Responsibility:** Notify before a document expires.
+```
 
-```typescript
+typescript
 interface Expiration {
   id: string;
   company_id: string;
@@ -304,23 +309,24 @@ async function checkExpirations() {
 ```
 
 **Alert types:**
-- **Email** — to form responsible parties
-- **Dashboard** — badge in menu
+- **Email**, to form responsible parties
+- **Dashboard**, badge in menu
 - **Push notification** (future)
 - **Weekly summary** (future)
 
-### 2.5 Block 4 (optional extension) — Authoring assistant
+### 2.5 Block 4 (optional extension), Authoring assistant
 
 **Responsibility:** Build new forms, assist the user, validate cross-regulatory compliance.
 
 > **Scope.** This block is an optional extension, off by default and not required to
-> operate any core layer. Layers 1-3 and 5 (registry, template engine,
+> operate any core layer. Layers 1-3 and 5 (registry, template engine
 > snapshots/expirations, evidence and MSP connector) are deterministic and work without
 > it. It is developed independently of the main path.
 
 #### 4a. Form generation from regulation
+```
 
-```typescript
+typescript
 interface AIAgentFormGeneration {
   // Input: norm text or PDF
   // Output: FormDefinition ready to store in registry
@@ -341,13 +347,14 @@ interface AIAgentFormGeneration {
 ```
 
 **Agent tools:**
-- `web_search` — search for updated regulation texts
-- `document_analysis` — extract structure from regulatory PDFs
-- `json_schema_generator` — generate schema from structured text
+- `web_search`, search for updated regulation texts
+- `document_analysis`, extract structure from regulatory PDFs
+- `json_schema_generator`, generate schema from structured text
 
 #### 4b. Form-filling assistance
+```
 
-```typescript
+typescript
 interface AIAssistanceRequest {
   form_id: string;
   current_field: string;
@@ -366,8 +373,9 @@ async function assistFieldFilling(req: AIAssistanceRequest): Promise<{
 ```
 
 #### 4c. Cross-regulation validation
+```
 
-```typescript
+typescript
 // When a regulation changes, the agent re-evaluates
 async function revalidateFormsOnRegulationChange(
   regulationId: string,
@@ -381,9 +389,10 @@ async function revalidateFormsOnRegulationChange(
 
 #### 4d. Configurable AI engine
 
-The agent uses a configurable LLM — not tied to a specific provider.
+The agent uses a configurable LLM, not tied to a specific provider.
+```
 
-```typescript
+typescript
 interface LLMConfig {
   provider: 'openai' | 'anthropic' | 'ollama' | 'custom';
   model: string;
@@ -394,13 +403,14 @@ interface LLMConfig {
 
 **Decision:** Use **DSPy** (declarative LM programs) as abstraction. Allows changing models without changing code.
 
-### 2.6 Block 5 — MSP / Multi-tenant Architecture
+### 2.6 Block 5, MSP / Multi-tenant Architecture
 
 **Responsibility:** Allow an MSP to manage multiple client companies from a single instance, with isolated data and optional white-labeling.
 
 #### Multi-tenancy
+```
 
-```typescript
+typescript
 interface Tenant {
   id: string;                   // tenant_id
   name: string;
@@ -436,7 +446,6 @@ interface Tenant {
 #### Multi-tenant data model
 
 **Chosen option: Shared schema with tenant_id**
-
 ```
 // Advantage: simpler to operate
 // Disadvantage: must always filter by tenant_id
@@ -456,9 +465,10 @@ Tables without tenant_id (platform owner):
   - tenant (MSP config)
 ```
 
-#### MSP Connector — API for external agents
+#### MSP Connector, API for external agents
+```
 
-```typescript
+typescript
 interface MSPConnector {
   // An MSP (or external agent) can create/manage companies
   // via API with their own authentication
@@ -494,7 +504,6 @@ interface MSPConnector {
 ```
 
 #### External agent via MCP
-
 ```
 regulation-ledger exposes an MCP (Model Context Protocol) server
 that allows an external agent to:
@@ -504,8 +513,8 @@ that allows an external agent to:
   4. Generate reports
   5. Receive expiration alerts
 
-This is what the user called "LaserBeam" — an agent that connects
-to regulation-ledger to build forms automatically.
+An external agent connects to regulation-ledger over that server
+to build and manage forms automatically.
 ```
 
 ---
@@ -514,7 +523,7 @@ to regulation-ledger to build forms automatically.
 
 | Layer | Technology | Justification |
 |-------|-----------|---------------|
-| Frontend | Vue 3 + TypeScript | Small attack surface, strict typing, mature form ecosystem |
+| Frontend | Vue 3 + TypeScript | Small attack surface, strict typing, mature form system |
 | State | Pinia | Vue 3 state management |
 | Backend | Node.js + Express or Fastify | Single runtime for API and jobs, simple self-hosted deployment |
 | Database | PostgreSQL + JSONB | Structured data + flexible schemas |
@@ -529,7 +538,7 @@ to regulation-ledger to build forms automatically.
 
 ## 4. Development Phases
 
-### Phase 1 — V1.0 (Base + Minimal Wizard)
+### Phase 1, V1.0 (Base + Minimal Wizard)
 - [ ] PostgreSQL + Prisma setup with multi-tenant schema
 - [ ] Form registry with 10 locked forms (critical CO)
 - [ ] Categories registry
@@ -539,26 +548,26 @@ to regulation-ledger to build forms automatically.
 - [ ] Submission storage
 - [ ] Auth with roles (admin, editor, viewer)
 
-### Phase 2 — V1.1 (Templates + Expirations)
+### Phase 2, V1.1 (Templates + Expirations)
 - [ ] Remaining locked forms (~30 total)
 - [ ] Templates by sector (construction, health, manufacturing)
 - [ ] Expiration system with email alerts
 - [ ] Compliance dashboard (% completed)
 - [ ] Dynamic menu from registry
 
-### Phase 3 — V2.0 (MSP connector + multi-tenant)
+### Phase 3, V2.0 (MSP connector + multi-tenant)
 - [ ] MSP REST API connector
 - [ ] MCP server as an adapter over the API
 - [ ] White-labeling (logo, colors, domain)
 - [ ] Bulk operations for MSPs
 
-### Phase 4 — V2.1 (Multi-region)
+### Phase 4, V2.1 (Multi-region)
 - [ ] MSP REST API connector
 - [ ] MCP server for external agent
 - [ ] White-labeling (logo, colors, domain)
 - [ ] Bulk operations for MSPs
 
-### Phase 5 — V2.2 (International coverage)
+### Phase 5, V2.2 (International coverage)
 - [ ] MX, PE jurisdiction
 - [ ] International templates
 - [ ] UI translations
@@ -583,8 +592,9 @@ database and delegates isolation to the engine, which enforces it even when the
 application code has a defect.
 
 **Canonical implementation:**
+```
 
-```sql
+sql
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE companies FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON companies
@@ -594,14 +604,14 @@ CREATE POLICY tenant_isolation ON companies
 Every request runs `SET LOCAL app.current_tenant = '<uuid>'` before the query.
 
 **Tables with `tenant_id`:** companies, company_forms, form_submissions, vencimientos, alerts.
-**Global tables:** form_definitions, categories, templates, form_versions — shared
+**Global tables:** form_definitions, categories, templates, form_versions, shared
 registry, readable by all tenants.
 
 ### 5.2 Form rendering: JSONForms
 
 **Decision:** `@jsonforms/vue` with JSON Schema + UI Schema.
 
-**Rationale:** it is the option with official bindings for Vue 3, the project's framework,
+**Rationale:** it is the option with official bindings for Vue 3, the project's framework
 and keeps the same core as its React and Angular variants.
 
 **Accepted cost:** some domain fields, such as occupational-safety legal matrices, require
@@ -638,7 +648,7 @@ provider requires a data processing agreement and a jurisdiction review.
 **Decision:** daily polling job over the `vencimientos` table.
 
 **Rationale:** expirations depend on time, not on an external event. A fixed-cadence
-scheduler covers the case without event infrastructure. If the alert catalogue grows,
+scheduler covers the case without event infrastructure. If the alert catalogue grows
 the decision is revisited.
 
 **Monitoring:** the ledger-api exposes `last_cron_run_at` on its health endpoint, with a

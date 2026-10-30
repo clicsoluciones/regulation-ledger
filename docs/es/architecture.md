@@ -9,8 +9,9 @@ La base. Aporta el modelo de datos y las primitivas para crear registros inmutab
 integridad criptográfica.
 
 **Modelo de datos:**
+```
 
-```typescript
+typescript
 interface EvidenceRecord {
   id: string;                 // UUID v4
   timestamp: string;          // ISO 8601 con zona horaria
@@ -24,11 +25,11 @@ interface EvidenceRecord {
 
 **Superficie de API:**
 
-- `appendEvidence(record): EvidenceRecord` — valida el encadenamiento, calcula el hash y devuelve el registro añadido.
-- `verifyChain(records): { valid: boolean; brokenAt?: number }` — detecta manipulación.
-- `exportAuditTrail(records, format): Buffer` — exporta a JSON, CSV o PDF.
-- `signRecord(record, privateKey): EvidenceRecord` — añade firma Ed25519.
-- `verifySignature(record, publicKey): boolean` — verifica la firma Ed25519.
+- `appendEvidence(record): EvidenceRecord`, valida el encadenamiento, calcula el hash y devuelve el registro añadido.
+- `verifyChain(records): { valid: boolean; brokenAt?: number }`, detecta manipulación.
+- `exportAuditTrail(records, format): Buffer`, exporta a JSON, CSV o PDF.
+- `signRecord(record, privateKey): EvidenceRecord`, añade firma Ed25519.
+- `verifySignature(record, publicKey): boolean`, verifica la firma Ed25519.
 
 ## Capa 2: `regulation-snapshot`
 
@@ -37,8 +38,9 @@ una `effective_to` opcional. El sistema puede responder qué valor tenía la con
 la fecha Y para el dominio Z.
 
 **Modelo de datos:**
+```
 
-```typescript
+typescript
 interface LegalConstant {
   id: string;
   domain: string;             // p. ej. "sst.colombia"
@@ -48,16 +50,16 @@ interface LegalConstant {
   effective_to?: string;      // fecha ISO; indefinida = sigue vigente
   source_url?: string;        // URL a la publicación oficial
   source_title?: string;      // p. ej. "Resolución 0312/2019"
-  jurisdiction: string;       // p. ej. "CO", "EU", "US-CA"
+  jurisdiction: string;       // p. ej. "CO", "EU", "MX"
 }
 ```
 
 **Superficie de API:**
 
-- `registerConstant(constant): void` — añade al registro; falla si se solapa con uno existente.
-- `getConstantsForDate(domain, date, jurisdiction?): LegalConstant[]` — constantes vigentes en una fecha.
-- `getConstantHistory(domain, key): LegalConstant[]` — todas las versiones de una constante en el tiempo.
-- `attachLegislationToRecord(record, constants): EvidenceRecord` — extiende un registro de `evidence-core` con la instantánea normativa aplicable.
+- `registerConstant(constant): void`, añade al registro; falla si se solapa con uno existente.
+- `getConstantsForDate(domain, date, jurisdiction?): LegalConstant[]`, constantes vigentes en una fecha.
+- `getConstantHistory(domain, key): LegalConstant[]`, todas las versiones de una constante en el tiempo.
+- `attachLegislationToRecord(record, constants): EvidenceRecord`, extiende un registro de `evidence-core` con la instantánea normativa aplicable.
 
 ## Capa 3: `compliance-validate`
 
@@ -66,8 +68,9 @@ El motor evalúa un registro, o un conjunto, contra las reglas y produce un info
 cumplimiento.
 
 **Ejemplo de regla:**
+```
 
-```yaml
+yaml
 id: sst.training.has_valid_date
 domain: sst.colombia
 severity: error
@@ -81,10 +84,10 @@ source: "Resolución 0312/2019 Art. 18"
 
 **Superficie de API:**
 
-- `loadRules(rulesPath): Rule[]` — carga desde archivo o directorio.
-- `validate(record, rules): ComplianceReport` — devuelve un informe estructurado.
-- `validateBatch(records, rules): ComplianceReport[]` — validación por lote.
-- `exportReport(report, format): Buffer` — JSON, PDF o HTML.
+- `loadRules(rulesPath): Rule[]`, carga desde archivo o directorio.
+- `validate(record, rules): ComplianceReport`, devuelve un informe estructurado.
+- `validateBatch(records, rules): ComplianceReport[]`, validación por lote.
+- `exportReport(report, format): Buffer`, JSON, PDF o HTML.
 
 ## Capa 4: `ledger-api`
 
@@ -92,12 +95,12 @@ API HTTP que expone las tres librerías anteriores. Construida sobre Fastify.
 
 **Endpoints (v0.1 prevista):**
 
-- `POST /evidence` — añade un registro de evidencia.
-- `GET /evidence/:id` — recupera un registro por id.
-- `GET /evidence/verify?from=...&to=...` — verifica un segmento de la cadena.
-- `GET /snapshot/:domain?date=...&jurisdiction=...` — instantánea normativa aplicable.
-- `POST /validate` — ejecuta la validación de cumplimiento.
-- `GET /health` — comprobación de estado.
+- `POST /evidence`, añade un registro de evidencia.
+- `GET /evidence/:id`, recupera un registro por id.
+- `GET /evidence/verify?from=...&to=...`, verifica un segmento de la cadena.
+- `GET /snapshot/:domain?date=...&jurisdiction=...`, instantánea normativa aplicable.
+- `POST /validate`, ejecuta la validación de cumplimiento.
+- `GET /health`, comprobación de estado.
 
 **Despliegue:**
 
@@ -105,7 +108,6 @@ Docker Compose para despliegue en infraestructura propia. Contenedor más volume
 persistente para el registro.
 
 ## Ejemplo de flujo de datos
-
 ```
 El usuario sube un evento de formación
         │
@@ -135,10 +137,10 @@ Guardado en volumen persistente local
 ## Por qué MPL-2.0
 
 - **Compatible con uso comercial.** Las empresas pueden construir productos propietarios
-  encima sin abrir su código.
+ encima sin abrir su código.
 - **Las mejoras al núcleo vuelven al núcleo.** Si alguien modifica un archivo de
-  `regulation-ledger` y lo distribuye, la modificación debe publicarse bajo MPL-2.0.
+ `regulation-ledger` y lo distribuye, la modificación debe publicarse bajo MPL-2.0.
 - **Copyleft a nivel de archivo.** A diferencia de GPL, MPL-2.0 no exige abrir toda la
-  obra derivada: solo los archivos con licencia MPL que hayan sido modificados.
+ obra derivada: solo los archivos con licencia MPL que hayan sido modificados.
 
 Es la misma licencia que Mozilla usa para Firefox, Thunderbird y el motor Servo.

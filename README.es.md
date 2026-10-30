@@ -1,6 +1,6 @@
 # regulation-ledger
 
-Sistema open source de gestión de cumplimiento normativo con formularios adaptativos,
+Sistema open source de gestión de cumplimiento normativo con formularios adaptativos
 templates regulatorios versionados y seguimiento de evidencia auditable para
 cumplimiento regulatorio multi-jurisdiccional.
 
@@ -10,7 +10,7 @@ cumplimiento regulatorio multi-jurisdiccional.
 
 ## Acerca del proyecto
 
-`regulation-ledger` resuelve un problema concreto: las empresas enfrentan formularios regulatorios abrumadores que no coinciden con su perfil real — tamaño incorrecto, clase de riesgo, o sector — generando confusión, incumplimiento y desperdicio de recursos.
+`regulation-ledger` resuelve un problema concreto: las empresas enfrentan formularios regulatorios abrumadores que no coinciden con su perfil real, tamaño incorrecto, clase de riesgo, o sector, generando confusión, incumplimiento y desperdicio de recursos.
 
 ### Por qué importa este proyecto
 
@@ -23,7 +23,6 @@ cumplimiento regulatorio multi-jurisdiccional.
 4. **La evidencia es verificable, no solo se guarda.** Cada registro se encadena por hash, de modo que un auditor puede reconstruir qué se presentó, cuándo y contra qué versión normativa.
 
 ## Arquitectura
-
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Frontend  (Vue 3 + TypeScript + Pinia + JSONForms)          │
@@ -42,19 +41,18 @@ cumplimiento regulatorio multi-jurisdiccional.
 
 ### Capas core
 
-- **Form Builder Engine** — Registry de JSON Schema versionado con categorías y reglas de aplicabilidad (clase de riesgo, sector, número de empleados, jurisdicción). Formularios bloqueados protegen requisitos regulatorios obligatorios.
-- **Template Engine** — Generación de menú adaptativa por perfil. Perfil de empresa → template aplicable → conjunto mínimo de formularios relevantes. Sin sobrecarga.
-- **Snapshots normativos** — Cada versión de regla se captura como snapshot inmutable. Cuando una norma cambia, los formularios afectados se marcan en vez de derivar silenciosamente.
-- **Sistema de Vencimientos** — Alertas automáticas de expiración para documentos, certificaciones y renovaciones periódicas. Notificaciones por email + dashboard.
-- **Cadena de evidencia** — Registro append-only encadenado por hash de presentaciones y documentos de soporte.
-- **Conector MSP** — API REST + servidor MCP para MSPs que gestionan múltiples empresas cliente. Operaciones en masa, dashboards, integraciones externas.
+- **Form Builder Engine**, Registry de JSON Schema versionado con categorías y reglas de aplicabilidad (clase de riesgo, sector, número de empleados, jurisdicción). Formularios bloqueados protegen requisitos regulatorios obligatorios.
+- **Template Engine**, Generación de menú adaptativa por perfil. Perfil de empresa -> template aplicable -> conjunto mínimo de formularios relevantes. Sin sobrecarga.
+- **Snapshots normativos**, Cada versión de regla se captura como snapshot inmutable. Cuando una norma cambia, los formularios afectados se marcan en vez de derivar silenciosamente.
+- **Sistema de Vencimientos**, Alertas automáticas de expiración para documentos, certificaciones y renovaciones periódicas. Notificaciones por email + dashboard.
+- **Cadena de evidencia**, Registro append-only encadenado por hash de presentaciones y documentos de soporte.
+- **Conector MSP**, API REST + servidor MCP para MSPs que gestionan múltiples empresas cliente. Operaciones en masa, dashboards, integraciones externas.
 
 Las capas deterministas anteriores son el núcleo del proyecto. Un asistente opcional, local y apagado por defecto está disponible como extensión separada para asistir en la autoría de formularios; no es necesario para operar el sistema ni forma parte del roadmap core.
 
 ## Concepto central
 
 Los formularios siguen el perfil de la empresa:
-
 ```
 Company Profile {
   clase_riesgo: "III"
@@ -71,9 +69,9 @@ Company Profile {
 
 La documentación técnica completa está en [`docs/es/`](docs/es/):
 
-- [Especificación técnica](docs/es/SPEC.md) — problema, arquitectura, stack, fases y decisiones cerradas.
-- [Arquitectura](docs/es/architecture.md) — las cuatro capas y su superficie de API.
-- [Roadmap](docs/es/roadmap.md) — fases por mes con entregables y criterio de éxito.
+- [Especificación técnica](docs/es/SPEC.md), problema, arquitectura, stack, fases y decisiones cerradas.
+- [Arquitectura](docs/es/architecture.md), las cuatro capas y su superficie de API.
+- [Roadmap](docs/es/roadmap.md), fases por mes con entregables y criterio de éxito.
 
 English documentation: [`docs/en/`](docs/en/).
 
@@ -100,8 +98,8 @@ fue generada por máquina, y asumir la responsabilidad del resultado.
 
 Existe una extensión opcional con un asistente local para la autoría de formularios: se
 ejecuta apagada por defecto, requiere un modelo alojado localmente y no es necesaria para
-operar ninguna capa core. Las capas core — registry, template engine, snapshots
-normativos, cadena de evidencia, conector MSP — son completamente deterministas y
+operar ninguna capa core. Las capas core, registry, template engine, snapshots
+normativos, cadena de evidencia, conector MSP, son completamente deterministas y
 funcionan sin ella.
 
 ## Estado

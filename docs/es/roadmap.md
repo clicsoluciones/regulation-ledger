@@ -1,4 +1,4 @@
-# Roadmap — Regulation Ledger
+# Roadmap, Regulation Ledger
 
 ## Estrategia central
 
@@ -6,7 +6,7 @@ Desarrollo basado en **Form Builder Engine** (registry de JSON Schema versionado
 
 ---
 
-## Fase 1: Foundation — Mes 1-2
+## Fase 1: Foundation, Mes 1-2
 
 **Meta:** Form Builder Engine funcional con registry de JSON Schema.
 
@@ -22,23 +22,23 @@ Un formulario dinámico renderizado desde JSON Schema en Vue 3 sin código nuevo
 
 ---
 
-## Fase 2: Company Profiles + Wizard — Mes 2-3
+## Fase 2: Company Profiles + Wizard, Mes 2-3
 
 **Meta:** Wizard de configuración que genera el menú adaptativo.
 
 ### Entregables
 - Wizard de 7 pasos (empresa, sedes, áreas, responsables, clasificación)
 - CompanyProfile: `clase_riesgo`, `sector_ciiu`, `num_empleados`, `jurisdiccion`
-- Template Engine: perfil → template aplicable → menú de formularios
+- Template Engine: perfil -> template aplicable -> menú de formularios
 - CRUD de companies y profiles
 - Permisos y roles por empresa
 
 ### Criterio de éxito
-Empresa creada → menú muestra solo los formularios que le aplican según su perfil.
+Empresa creada -> menú muestra solo los formularios que le aplican según su perfil.
 
 ---
 
-## Fase 3: Sistema de Vencimientos — Mes 3-4
+## Fase 3: Sistema de Vencimientos, Mes 3-4
 
 **Meta:** Alertas automáticas de expiración documental.
 
@@ -54,7 +54,7 @@ El sistema alerta antes de que venza un documento o certificación.
 
 ---
 
-## Fase 4: Evidencia y snapshots normativos — Mes 4-6
+## Fase 4: Evidencia y snapshots normativos, Mes 4-6
 
 **Meta:** Traza de evidencia verificable y control de vigencia normativa.
 
@@ -66,12 +66,12 @@ El sistema alerta antes de que venza un documento o certificación.
 - Revalidación cruzada de reglas cuando cambia la norma
 
 ### Criterio de éxito
-Un auditor puede reconstruir qué se presentó, cuándo y contra qué versión de la norma,
+Un auditor puede reconstruir qué se presentó, cuándo y contra qué versión de la norma
 usando solo el export.
 
 ---
 
-## Fase 5: Conector MSP — Mes 7-12
+## Fase 5: Conector MSP, Mes 7-12
 
 **Meta:** API para MSPs que gestionan múltiples empresas cliente.
 

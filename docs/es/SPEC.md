@@ -1,4 +1,4 @@
-# Regulation Ledger — Especificación Técnica
+# Regulation Ledger, Especificación Técnica
 
 > Versión: 0.2.0
 > Fecha: 10-oct-2026
@@ -14,12 +14,12 @@
 
 Las herramientas de SG-SST en el mercado presentan una carga cognitiva excesiva para el usuario final. Las empresas reciben herramientas con demasiados módulos irrelevantes para su perfil específico, lo que genera:
 
-- **Carga cognitiva excesiva** → frustración → abandono del sistema
+- **Carga cognitiva excesiva** -> frustración -> abandono del sistema
 - **Módulos irrelevantes** que no aplican según tamaño, sector o clase de riesgo de la empresa
 - **Sobrecarga operativa** sin reducción tangible del riesgo real
 - **Experiencia confusa** para usuarios sin conocimiento normativo previo
 
-La arquitectura correcta parte de perfil de empresa → templates → menú mínimo viable.
+La arquitectura correcta parte de perfil de empresa -> templates -> menú mínimo viable.
 
 ### 1.2 Lo que realmente exige la ley colombiana
 
@@ -67,14 +67,13 @@ No son 113 formularios. Son ~30 formularios únicos organizados por el ciclo PHV
 
 ### 2.1 Filosofía central
 
-> **El producto no es el formulario. Es el registry + motor de templates + agente IA.**
+> **El producto no es el formulario. Es el registry y el motor de templates.**
 > Los formularios son consecuencia, no el producto.
 
 Tres capas independientes:
-
 ```
 ┌─────────────────────────────────────────────────┐
-│  AGENTE IA — Construcción y asistencia           │
+│  EVIDENCIA Y SNAPSHOTS — Registro verificable    │
 ├─────────────────────────────────────────────────┤
 │  MOTOR DE TEMPLATES — Menú adaptativo por perfil │
 ├─────────────────────────────────────────────────┤
@@ -83,19 +82,20 @@ Tres capas independientes:
 └─────────────────────────────────────────────────┘
 ```
 
-### 2.2 Bloque 1 — Form Builder Engine
+### 2.2 Bloque 1, Form Builder Engine
 
 **Responsabilidad:** Almacenar y servir definiciones de formularios como JSON Schema puro.
 
 **Base tecnológica:**
-- **JSONForms Vue** — renderer de forms desde JSON Schema para Vue 3
+- **JSONForms Vue**, renderer de forms desde JSON Schema para Vue 3
 - **Almacenamiento:** PostgreSQL con JSONB para los schemas
 
 **No reinventamos la rueda.** Usamos una librería establecida y almacenamos los schemas en DB.
 
 #### Registry de formularios
+```
 
-```typescript
+typescript
 interface FormDefinition {
   id: string;                    // UUID
   slug: string;                  // "evaluacion-inicial-sst"
@@ -133,8 +133,9 @@ interface FormDefinition {
 ```
 
 #### Categories registry
+```
 
-```typescript
+typescript
 interface Category {
   id: string;
   slug: string;                  // "cumplimiento"
@@ -162,13 +163,14 @@ interface Category {
 - emergencias
 - configuracion
 
-### 2.3 Bloque 2 — Wizard + Template Engine
+### 2.3 Bloque 2, Wizard + Template Engine
 
 **Responsabilidad:** Generar el menú de formularios aplicables según el perfil de la empresa.
 
 #### Perfil de empresa
+```
 
-```typescript
+typescript
 interface CompanyProfile {
   id: string;
   nombre: string;
@@ -197,8 +199,9 @@ interface CompanyProfile {
 ```
 
 #### Templates
+```
 
-```typescript
+typescript
 interface Template {
   id: string;
   slug: string;                  // "pymes-riesgo-i-ii"
@@ -247,8 +250,9 @@ interface WizardStep {
 | industrial | riesgo IV-V, sector industrial | +Todo |
 
 #### Motor de templates
+```
 
-```typescript
+typescript
 function getApplicableTemplate(profile: CompanyProfile): Template {
   // 1. Buscar template exacto por perfil
   // 2. Si no hay exacto, buscar template por clase_riesgo
@@ -266,11 +270,12 @@ function getFormsForProfile(profile: CompanyProfile): FormDefinition[] {
 }
 ```
 
-### 2.4 Bloque 3 — Sistema de Alertas de Vencimientos
+### 2.4 Bloque 3, Sistema de Alertas de Vencimientos
 
 **Responsabilidad:** Notificar antes de que un documento venza.
+```
 
-```typescript
+typescript
 interface Vencimiento {
   id: string;
   company_id: string;
@@ -304,23 +309,24 @@ async function verificarVencimientos() {
 ```
 
 **Tipos de alerta:**
-- **Email** — a los responsables del form
-- **Dashboard** — badge en el menú
+- **Email**, a los responsables del form
+- **Dashboard**, badge en el menú
 - **Notificación push** (futuro)
 - **Resumen semanal** (futuro)
 
-### 2.5 Bloque 4 (extensión opcional) — Asistente de autoría
+### 2.5 Bloque 4 (extensión opcional), Asistente de autoría
 
 **Responsabilidad:** Construir formularios nuevos, asistir al usuario, validar cruces normativos.
 
 > **Alcance.** Este bloque es una extensión opcional, apagada por defecto y no
-> necesaria para operar ninguna capa core. Las capas 1-3 y 5 (registry, template engine,
+> necesaria para operar ninguna capa core. Las capas 1-3 y 5 (registry, template engine
 > snapshots/vencimientos, evidencia y conector MSP) son deterministas y funcionan sin él.
 > Se desarrolla de forma independiente del camino principal.
 
 #### 4a. Generación de formularios por normativa
+```
 
-```typescript
+typescript
 interface AIAgentFormGeneration {
   // Input: texto de una norma o PDF
   // Output: FormDefinition listo para存入 registry
@@ -341,13 +347,14 @@ interface AIAgentFormGeneration {
 ```
 
 **Herramientas del agente:**
-- `web_search` — buscar textos de normas actualizadas
-- `document_analysis` — extraer estructura de PDFs normativos
-- `json_schema_generator` — generar schema desde texto estructurado
+- `web_search`, buscar textos de normas actualizadas
+- `document_analysis`, extraer estructura de PDFs normativos
+- `json_schema_generator`, generar schema desde texto estructurado
 
 #### 4b. Asistencia en diligenciamiento
+```
 
-```typescript
+typescript
 interface AIAssistanceRequest {
   form_id: string;
   current_field: string;
@@ -366,8 +373,9 @@ async function assistFieldFilling(req: AIAssistanceRequest): Promise<{
 ```
 
 #### 4c. Validación cruzada normativa
+```
 
-```typescript
+typescript
 // Cuando cambia una norma, el agente reevalúa
 async function revalidateFormsOnNormaChange(
   normaId: string,
@@ -381,9 +389,10 @@ async function revalidateFormsOnNormaChange(
 
 #### 4d. Motor IA configurable
 
-El agente usa un LLM configurable — no se ata a un provider específico.
+El agente usa un LLM configurable, no se ata a un provider específico.
+```
 
-```typescript
+typescript
 interface LLMConfig {
   provider: 'openai' | 'anthropic' | 'ollama' | 'custom';
   model: string;
@@ -394,13 +403,14 @@ interface LLMConfig {
 
 **Decisión:** Usar **DSPy** (declarative LM programs) como abstracción. Permite cambiar de modelo sin cambiar código.
 
-### 2.6 Bloque 5 — Arquitectura MSP / Multi-tenant
+### 2.6 Bloque 5, Arquitectura MSP / Multi-tenant
 
 **Responsabilidad:** Permitir que un MSP gestione múltiples empresas clientes desde una sola instancia, con sus propios datos aislados y branding opcional.
 
 #### Multi-tenancy
+```
 
-```typescript
+typescript
 interface Tenant {
   id: string;                   // tenant_id
   name: string;
@@ -436,7 +446,6 @@ interface Tenant {
 #### Modelo de datos multi-tenant
 
 **Opción elegida: Shared schema con tenant_id**
-
 ```
 // Ventaja: más simple de operar
 // Desventaja: requiere siempre filtrar por tenant_id
@@ -456,9 +465,10 @@ Tablas sin tenant_id (son del platform owner):
   - tenant (config del MSP)
 ```
 
-#### Conector MSP — API para agentes externos
+#### Conector MSP, API para agentes externos
+```
 
-```typescript
+typescript
 interface MSPConnector {
   // Un MSP (o agente externo) puede crear/gestionar empresas
   // vía API con autenticación propia
@@ -494,7 +504,6 @@ interface MSPConnector {
 ```
 
 #### Agente externo vía MCP
-
 ```
 regulation-ledger expone un servidor MCP (Model Context Protocol)
 que permite a un agente externo:
@@ -504,8 +513,8 @@ que permite a un agente externo:
   4. Generar reportes
   5. Recibir alertas de vencimientos
 
-Esto es lo que el usuario llamó "LaserBeam" — un agente que se conecta
-a regulation-ledger para construir formularios automáticamente.
+Un agente externo se conecta a regulation-ledger por ese servidor
+para construir y gestionar formularios automáticamente.
 ```
 
 ---
@@ -529,7 +538,7 @@ a regulation-ledger para construir formularios automáticamente.
 
 ## 4. Fases de Desarrollo
 
-### Fase 1 — V1.0 (Base + Wizard mínimo)
+### Fase 1, V1.0 (Base + Wizard mínimo)
 - [ ] PostgreSQL + Prisma setup con schema multi-tenant
 - [ ] Registry de formularios con 10 forms locked (críticos CO)
 - [ ] Categories registry
@@ -539,26 +548,26 @@ a regulation-ledger para construir formularios automáticamente.
 - [ ] Submission storage
 - [ ] Auth con roles (admin, editor, viewer)
 
-### Fase 2 — V1.1 (Templates + Vencimientos)
+### Fase 2, V1.1 (Templates + Vencimientos)
 - [ ] Resto de forms locked (~30 total)
 - [ ] Templates por sector (construcción, salud, manufactura)
 - [ ] Sistema de vencimientos con alertas email
 - [ ] Dashboard de cumplimiento (% completado)
 - [ ] Menú dinámico desde registry
 
-### Fase 3 — V2.0 (Conector MSP + multi-tenant)
+### Fase 3, V2.0 (Conector MSP + multi-tenant)
 - [ ] Conector MSP REST API
 - [ ] Servidor MCP como adaptador sobre la API
 - [ ] White-labeling (logo, colores, dominio)
 - [ ] Operaciones en lote para MSPs
 
-### Fase 4 — V2.1 (Multi-región)
+### Fase 4, V2.1 (Multi-región)
 - [ ] Conector MSP REST API
 - [ ] Servidor MCP para agente externo
 - [ ] White-labeling (logo, colores, dominio)
 - [ ] Bulk operations para MSPs
 
-### Fase 5 — V2.2 (Cobertura internacional)
+### Fase 5, V2.2 (Cobertura internacional)
 - [ ] Jurisdicción MX, PE
 - [ ] Templates internacionales
 - [ ] Traducciones de UI
@@ -570,7 +579,7 @@ a regulation-ledger para construir formularios automáticamente.
 
 ## 5. Decisiones de arquitectura
 
-Decisiones cerradas que condicionan la implementación. Cada una documenta la decisión,
+Decisiones cerradas que condicionan la implementación. Cada una documenta la decisión
 su justificación técnica y su efecto en el código.
 
 ### 5.1 Multi-tenancy: esquema compartido con `tenant_id` y Row-Level Security
@@ -583,8 +592,9 @@ mantiene una sola base y delega el aislamiento en el motor, que lo aplica aunque
 código de aplicación tenga un fallo.
 
 **Implementación canónica:**
+```
 
-```sql
+sql
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE companies FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON companies
@@ -594,7 +604,7 @@ CREATE POLICY tenant_isolation ON companies
 Cada request ejecuta `SET LOCAL app.current_tenant = '<uuid>'` antes de la consulta.
 
 **Tablas con `tenant_id`:** companies, company_forms, form_submissions, vencimientos, alerts.
-**Tablas globales:** form_definitions, categories, templates, form_versions — registro
+**Tablas globales:** form_definitions, categories, templates, form_versions, registro
 compartido, de lectura para todos los tenants.
 
 ### 5.2 Renderizado de formularios: JSONForms
@@ -604,7 +614,7 @@ compartido, de lectura para todos los tenants.
 **Justificación:** es la opción con bindings oficiales para Vue 3, el framework del
 proyecto, y mantiene el mismo núcleo que sus variantes para React y Angular.
 
-**Costo asumido:** algunos campos del dominio, como las matrices legales de SST,
+**Costo asumido:** algunos campos del dominio, como las matrices legales de SST
 requieren renderers propios.
 
 **Implementación:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` al inicio;
@@ -614,7 +624,7 @@ requieren renderers propios.
 
 **Decisión:** el asistente de autoría queda fuera del núcleo. Cuando se implemente, usa DSPy.
 
-**Justificación:** el caso de uso es generar JSON Schema a partir de texto normativo,
+**Justificación:** el caso de uso es generar JSON Schema a partir de texto normativo
 con un conjunto de datos disponible (decretos y resoluciones) y una métrica verificable
 (schema válido y campos cubiertos). DSPy optimiza el prompt contra esa métrica y se
 recompila cuando cambia el modelo, que es el fallo característico de los prompts

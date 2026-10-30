@@ -1,4 +1,4 @@
-# Regulation Ledger, Especificación Técnica
+# Regulation Ledger: Especificación Técnica
 
 > Versión: 0.2.0
 > Fecha: 10-oct-2026
@@ -82,7 +82,7 @@ Tres capas independientes:
 └─────────────────────────────────────────────────┘
 ```
 
-### 2.2 Bloque 1, Form Builder Engine
+### 2.2 Bloque 1: Form Builder Engine
 
 **Responsabilidad:** Almacenar y servir definiciones de formularios como JSON Schema puro.
 
@@ -163,7 +163,7 @@ interface Category {
 - emergencias
 - configuracion
 
-### 2.3 Bloque 2, Wizard + Template Engine
+### 2.3 Bloque 2: Wizard + Template Engine
 
 **Responsabilidad:** Generar el menú de formularios aplicables según el perfil de la empresa.
 
@@ -270,7 +270,7 @@ function getFormsForProfile(profile: CompanyProfile): FormDefinition[] {
 }
 ```
 
-### 2.4 Bloque 3, Sistema de Alertas de Vencimientos
+### 2.4 Bloque 3: Sistema de Alertas de Vencimientos
 
 **Responsabilidad:** Notificar antes de que un documento venza.
 ```
@@ -314,7 +314,7 @@ async function verificarVencimientos() {
 - **Notificación push** (futuro)
 - **Resumen semanal** (futuro)
 
-### 2.5 Bloque 4 (extensión opcional), Asistente de autoría
+### 2.5 Bloque 4 (extensión opcional): Asistente de autoría
 
 **Responsabilidad:** Construir formularios nuevos, asistir al usuario, validar cruces normativos.
 
@@ -403,7 +403,7 @@ interface LLMConfig {
 
 **Decisión:** Usar **DSPy** (declarative LM programs) como abstracción. Permite cambiar de modelo sin cambiar código.
 
-### 2.6 Bloque 5, Arquitectura MSP / Multi-tenant
+### 2.6 Bloque 5: Arquitectura MSP / Multi-tenant
 
 **Responsabilidad:** Permitir que un MSP gestione múltiples empresas clientes desde una sola instancia, con sus propios datos aislados y branding opcional.
 
@@ -465,7 +465,7 @@ Tablas sin tenant_id (son del platform owner):
   - tenant (config del MSP)
 ```
 
-#### Conector MSP, API para agentes externos
+#### Conector MSP: API para agentes externos
 ```
 
 typescript
@@ -538,7 +538,7 @@ para construir y gestionar formularios automáticamente.
 
 ## 4. Fases de Desarrollo
 
-### Fase 1, V1.0 (Base + Wizard mínimo)
+### Fase 1: V1.0 (Base + Wizard mínimo)
 - [ ] PostgreSQL + Prisma setup con schema multi-tenant
 - [ ] Registry de formularios con 10 forms locked (críticos CO)
 - [ ] Categories registry
@@ -548,26 +548,26 @@ para construir y gestionar formularios automáticamente.
 - [ ] Submission storage
 - [ ] Auth con roles (admin, editor, viewer)
 
-### Fase 2, V1.1 (Templates + Vencimientos)
+### Fase 2: V1.1 (Templates + Vencimientos)
 - [ ] Resto de forms locked (~30 total)
 - [ ] Templates por sector (construcción, salud, manufactura)
 - [ ] Sistema de vencimientos con alertas email
 - [ ] Dashboard de cumplimiento (% completado)
 - [ ] Menú dinámico desde registry
 
-### Fase 3, V2.0 (Conector MSP + multi-tenant)
+### Fase 3: V2.0 (Conector MSP + multi-tenant)
 - [ ] Conector MSP REST API
 - [ ] Servidor MCP como adaptador sobre la API
 - [ ] White-labeling (logo, colores, dominio)
 - [ ] Operaciones en lote para MSPs
 
-### Fase 4, V2.1 (Multi-región)
+### Fase 4: V2.1 (Multi-región)
 - [ ] Conector MSP REST API
 - [ ] Servidor MCP para agente externo
 - [ ] White-labeling (logo, colores, dominio)
 - [ ] Bulk operations para MSPs
 
-### Fase 5, V2.2 (Cobertura internacional)
+### Fase 5: V2.2 (Cobertura internacional)
 - [ ] Jurisdicción MX, PE
 - [ ] Templates internacionales
 - [ ] Traducciones de UI

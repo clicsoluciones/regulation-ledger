@@ -1,4 +1,4 @@
-# Roadmap, Regulation Ledger
+# Roadmap: Regulation Ledger
 
 ## Estrategia central
 
@@ -6,7 +6,7 @@ Desarrollo basado en **Form Builder Engine** (registry de JSON Schema versionado
 
 ---
 
-## Fase 1: Foundation, Mes 1-2
+## Fase 1: Foundation: Mes 1-2
 
 **Meta:** Form Builder Engine funcional con registry de JSON Schema.
 
@@ -22,7 +22,7 @@ Un formulario dinámico renderizado desde JSON Schema en Vue 3 sin código nuevo
 
 ---
 
-## Fase 2: Company Profiles + Wizard, Mes 2-3
+## Fase 2: Company Profiles + Wizard: Mes 2-3
 
 **Meta:** Wizard de configuración que genera el menú adaptativo.
 
@@ -38,7 +38,7 @@ Empresa creada -> menú muestra solo los formularios que le aplican según su pe
 
 ---
 
-## Fase 3: Sistema de Vencimientos, Mes 3-4
+## Fase 3: Sistema de Vencimientos: Mes 3-4
 
 **Meta:** Alertas automáticas de expiración documental.
 
@@ -54,7 +54,7 @@ El sistema alerta antes de que venza un documento o certificación.
 
 ---
 
-## Fase 4: Evidencia y snapshots normativos, Mes 4-6
+## Fase 4: Evidencia y snapshots normativos: Mes 4-6
 
 **Meta:** Traza de evidencia verificable y control de vigencia normativa.
 
@@ -71,7 +71,7 @@ usando solo el export.
 
 ---
 
-## Fase 5: Conector MSP, Mes 7-12
+## Fase 5: Conector MSP: Mes 7-12
 
 **Meta:** API para MSPs que gestionan múltiples empresas cliente.
 

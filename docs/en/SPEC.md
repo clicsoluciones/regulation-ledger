@@ -1,4 +1,4 @@
-# Regulation Ledger, Technical Specification
+# Regulation Ledger: Technical Specification
 
 > Version: 0.2.0
 > Date: 10-oct-2026
@@ -82,7 +82,7 @@ Three independent layers:
 └─────────────────────────────────────────────────┘
 ```
 
-### 2.2 Block 1, Form Builder Engine
+### 2.2 Block 1: Form Builder Engine
 
 **Responsibility:** Store and serve form definitions as pure JSON Schema.
 
@@ -163,7 +163,7 @@ interface Category {
 - emergencies
 - configuration
 
-### 2.3 Block 2, Wizard + Template Engine
+### 2.3 Block 2: Wizard + Template Engine
 
 **Responsibility:** Generate the applicable form menu based on the company profile.
 
@@ -270,7 +270,7 @@ function getFormsForProfile(profile: CompanyProfile): FormDefinition[] {
 }
 ```
 
-### 2.4 Block 3, Expiration Alerts System
+### 2.4 Block 3: Expiration Alerts System
 
 **Responsibility:** Notify before a document expires.
 ```
@@ -314,7 +314,7 @@ async function checkExpirations() {
 - **Push notification** (future)
 - **Weekly summary** (future)
 
-### 2.5 Block 4 (optional extension), Authoring assistant
+### 2.5 Block 4 (optional extension): Authoring assistant
 
 **Responsibility:** Build new forms, assist the user, validate cross-regulatory compliance.
 
@@ -403,7 +403,7 @@ interface LLMConfig {
 
 **Decision:** Use **DSPy** (declarative LM programs) as abstraction. Allows changing models without changing code.
 
-### 2.6 Block 5, MSP / Multi-tenant Architecture
+### 2.6 Block 5: MSP / Multi-tenant Architecture
 
 **Responsibility:** Allow an MSP to manage multiple client companies from a single instance, with isolated data and optional white-labeling.
 
@@ -465,7 +465,7 @@ Tables without tenant_id (platform owner):
   - tenant (MSP config)
 ```
 
-#### MSP Connector, API for external agents
+#### MSP Connector: API for external agents
 ```
 
 typescript
@@ -538,7 +538,7 @@ to build and manage forms automatically.
 
 ## 4. Development Phases
 
-### Phase 1, V1.0 (Base + Minimal Wizard)
+### Phase 1: V1.0 (Base + Minimal Wizard)
 - [ ] PostgreSQL + Prisma setup with multi-tenant schema
 - [ ] Form registry with 10 locked forms (critical CO)
 - [ ] Categories registry
@@ -548,26 +548,26 @@ to build and manage forms automatically.
 - [ ] Submission storage
 - [ ] Auth with roles (admin, editor, viewer)
 
-### Phase 2, V1.1 (Templates + Expirations)
+### Phase 2: V1.1 (Templates + Expirations)
 - [ ] Remaining locked forms (~30 total)
 - [ ] Templates by sector (construction, health, manufacturing)
 - [ ] Expiration system with email alerts
 - [ ] Compliance dashboard (% completed)
 - [ ] Dynamic menu from registry
 
-### Phase 3, V2.0 (MSP connector + multi-tenant)
+### Phase 3: V2.0 (MSP connector + multi-tenant)
 - [ ] MSP REST API connector
 - [ ] MCP server as an adapter over the API
 - [ ] White-labeling (logo, colors, domain)
 - [ ] Bulk operations for MSPs
 
-### Phase 4, V2.1 (Multi-region)
+### Phase 4: V2.1 (Multi-region)
 - [ ] MSP REST API connector
 - [ ] MCP server for external agent
 - [ ] White-labeling (logo, colors, domain)
 - [ ] Bulk operations for MSPs
 
-### Phase 5, V2.2 (International coverage)
+### Phase 5: V2.2 (International coverage)
 - [ ] MX, PE jurisdiction
 - [ ] International templates
 - [ ] UI translations

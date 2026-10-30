@@ -1,4 +1,4 @@
-# Roadmap, Regulation Ledger
+# Roadmap: Regulation Ledger
 
 ## Core strategy
 
@@ -7,7 +7,7 @@ Development is driven by the **Form Builder Engine** (versioned JSON Schema regi
 
 ---
 
-## Phase 1: Foundation, Month 1-2
+## Phase 1: Foundation: Month 1-2
 
 **Goal:** a working Form Builder Engine with a JSON Schema registry.
 
@@ -23,7 +23,7 @@ A dynamic form rendered from JSON Schema in Vue 3 with no new code per form.
 
 ---
 
-## Phase 2: Company Profiles + Wizard, Month 2-3
+## Phase 2: Company Profiles + Wizard: Month 2-3
 
 **Goal:** a setup wizard that generates the adaptive menu.
 
@@ -39,7 +39,7 @@ Company created -> the menu shows only the forms that apply to its profile.
 
 ---
 
-## Phase 3: Expiration system, Month 3-4
+## Phase 3: Expiration system: Month 3-4
 
 **Goal:** automatic alerts for document expiration.
 
@@ -55,7 +55,7 @@ The system alerts before a document or certification expires.
 
 ---
 
-## Phase 4: Evidence and regulatory snapshots, Month 4-6
+## Phase 4: Evidence and regulatory snapshots: Month 4-6
 
 **Goal:** a verifiable evidence trail and control over regulatory validity.
 
@@ -72,7 +72,7 @@ norm, using only the export.
 
 ---
 
-## Phase 5: MSP connector, Month 7-12
+## Phase 5: MSP connector: Month 7-12
 
 **Goal:** an API for MSPs managing multiple client companies.
 

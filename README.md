@@ -68,7 +68,13 @@ Company Profile {
 
 ## Documentation
 
-Full technical documentation: [`docs/en/`](docs/en/)
+Full technical documentation lives in [`docs/en/`](docs/en/):
+
+- [Technical specification](docs/en/SPEC.md) — problem, architecture, stack, phases and closed decisions.
+- [Architecture](docs/en/architecture.md) — the four layers and their API surface.
+- [Roadmap](docs/en/roadmap.md) — phases by month with deliverables and success criteria.
+
+Documentación en español: [`docs/es/`](docs/es/).
 
 ## License
 

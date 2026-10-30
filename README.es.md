@@ -69,7 +69,13 @@ Company Profile {
 
 ## Documentación
 
-Documentación técnica completa en [`docs/es/`](docs/es/).
+La documentación técnica completa está en [`docs/es/`](docs/es/):
+
+- [Especificación técnica](docs/es/SPEC.md) — problema, arquitectura, stack, fases y decisiones cerradas.
+- [Arquitectura](docs/es/architecture.md) — las cuatro capas y su superficie de API.
+- [Roadmap](docs/es/roadmap.md) — fases por mes con entregables y criterio de éxito.
+
+English documentation: [`docs/en/`](docs/en/).
 
 ## Licencia
 

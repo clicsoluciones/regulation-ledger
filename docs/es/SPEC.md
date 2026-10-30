@@ -514,16 +514,15 @@ a regulation-ledger para construir formularios automáticamente.
 
 | Capa | Tecnología | Justificación |
 |------|-----------|---------------|
-| Frontend | Vue 3 + TypeScript | Menor superficie de ataque, tipado estricto, ecosistema deformularios maduro |
+| Frontend | Vue 3 + TypeScript | Menor superficie de ataque, tipado estricto, ecosistema de formularios maduro |
 | Estado | Pinia | State management Vue 3 |
 | Backend | Node.js + Express o Fastify | Runtime único para API y jobs, despliegue self-hosted simple |
 | Base de datos | PostgreSQL + JSONB | Datos estructurados + schemas flexibles |
 | ORM | Prisma | Type-safe, migrations, multi-tenant |
 | Auth | Lucia | Multi-tenant con roles, self-hosted |
 | Form rendering | JSONForms Vue | JSON Schema estándar para Vue |
-| AI | DSPy + LLM configurable | Declarativo, swappable |
-| API | REST + MCP (futuro) | Conector MSP/AI |
-| Hosting | Self-hosted (Docker) | El usuario quiere efectivo, no SaaS |
+| API | REST + MCP (futuro) | Conector MSP |
+| Hosting | Self-hosted (Docker) | Despliegue en infraestructura propia del operador |
 | CI/CD | GitHub Actions | Repo en GitHub |
 
 ---
@@ -540,147 +539,116 @@ a regulation-ledger para construir formularios automáticamente.
 - [ ] Submission storage
 - [ ] Auth con roles (admin, editor, viewer)
 
-### Fase 2 — V1.1 (Templates + Vencomientos)
+### Fase 2 — V1.1 (Templates + Vencimientos)
 - [ ] Resto de forms locked (~30 total)
 - [ ] Templates por sector (construcción, salud, manufactura)
 - [ ] Sistema de vencimientos con alertas email
 - [ ] Dashboard de cumplimiento (% completado)
 - [ ] Menú dinámico desde registry
 
-### Fase 3 — V2.0 (Agente IA)
-- [ ] DSPy setup con LLM configurable
-- [ ] Agente de generación de forms desde normativa
-- [ ] Asistencia en diligenciamiento (chat inline)
-- [ ] Validación cruzada normativa
+### Fase 3 — V2.0 (Conector MSP + multi-tenant)
+- [ ] Conector MSP REST API
+- [ ] Servidor MCP como adaptador sobre la API
+- [ ] White-labeling (logo, colores, dominio)
+- [ ] Operaciones en lote para MSPs
 
-### Fase 4 — V2.1 (MSP + Multi-tenant)
+### Fase 4 — V2.1 (Multi-región)
 - [ ] Conector MSP REST API
 - [ ] Servidor MCP para agente externo
 - [ ] White-labeling (logo, colores, dominio)
 - [ ] Bulk operations para MSPs
 
-### Fase 5 — V2.2 (Multi-región)
+### Fase 5 — V2.2 (Cobertura internacional)
 - [ ] Jurisdicción MX, PE
 - [ ] Templates internacionales
 - [ ] Traducciones de UI
 
+> La extensión opcional de asistencia (sección 5.3) no forma parte de estas fases ni
+> del alcance financiado.
+
 ---
 
-## 5. Decisiones Arquitectónicas Cerradas (v0.2)
+## 5. Decisiones de arquitectura
 
-> Decisiones tomadas tras investigación externa. Citas en línea cuando aplica.
+Decisiones cerradas que condicionan la implementación. Cada una documenta la decisión,
+su justificación técnica y su efecto en el código.
 
-### 5.1 Multi-tenancy: schema compartido con `tenant_id` + Row-Level Security (RLS)
+### 5.1 Multi-tenancy: esquema compartido con `tenant_id` y Row-Level Security
 
-**Decisión:** Shared schema con columna `tenant_id` en cada tabla, **forzado por PostgreSQL RLS** (no solo convención de aplicación).
+**Decisión:** esquema compartido con columna `tenant_id` en cada tabla, **forzado por
+PostgreSQL RLS**, no por convención de la aplicación.
 
-**Evidencia:**
-- 2025-2026 consensus (Streamkap, AWS, dev.to, Supabase): "For the vast majority of modern SaaS applications, the shared-schema model using a `tenant_id` column is the way to go. It provides the clearest path to scalability and cost savings." [streamkap.com](https://streamkap.com/resources-and-guides/postgresql-cdc-multi-tenant)
-- RLS en PostgreSQL está production-grade: AWS demuestra cross-tenant writes devuelven `UPDATE 0` cuando la policy bloquea, no requiere código adicional si no confiar en la convención. [aws.amazon.com](https://aws.amazon.com/blogs/database/multi-tenant-data-isolation-with-postgresql-row-level-security/)
-- Trade-off honesto: schema-per-tenant es 100K instancias imposibles de operar; shared schema escala, RLS protege.
+**Justificación:** un esquema por tenant no es operable a escala. El esquema compartido
+mantiene una sola base y delega el aislamiento en el motor, que lo aplica aunque el
+código de aplicación tenga un fallo.
 
 **Implementación canónica:**
+
 ```sql
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE companies FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON companies
   USING (tenant_id = current_setting('app.current_tenant')::uuid);
 ```
-Cada request setea `SET LOCAL app.current_tenant = '<uuid>'` antes de ejecutar. Sin exception manual, no hay fugas.
+
+Cada request ejecuta `SET LOCAL app.current_tenant = '<uuid>'` antes de la consulta.
 
 **Tablas con `tenant_id`:** companies, company_forms, form_submissions, vencimientos, alerts.
-**Tablas globales (sin tenant_id):** form_definitions, categories, templates, form_versions (registry global, lectura por todos los tenants).
+**Tablas globales:** form_definitions, categories, templates, form_versions — registro
+compartido, de lectura para todos los tenants.
 
-### 5.2 Form renderer: JSONForms Vue
+### 5.2 Renderizado de formularios: JSONForms
 
-**Decisión:** JSONForms Vue (`@jsonforms/vue`), no react-jsonschema-form (rjsf).
+**Decisión:** `@jsonforms/vue` con JSON Schema + UI Schema.
 
-**Cambio respecto a la recomendación del SPEC v0.1:** el SPEC v0.1 decía "rjsf, más popular". Era incorrecto: rjsf **es solo React**. La recomendación queda invalida porque el stack ya está definido como Vue 3.
+**Justificación:** es la opción con bindings oficiales para Vue 3, el framework del
+proyecto, y mantiene el mismo núcleo que sus variantes para React y Angular.
 
-**Evidencia:**
-- rjsf issue [#4482](https://github.com/rjsf-team/react-jsonschema-form/issues/4482) (mantenedores oficial): "You may just want to build a new system called Vue Json Schema Form" — no hay versión Vue oficial de rjsf.
-- JSONForms Vue 3.8.0 (jun-2026): primera clase, MIT, bindings oficiales para Vue 3, mismo core que React/Angular. [eclipsesource/jsonforms](https://github.com/eclipsesource/jsonforms)
-- JSONForms Community: "focuses on customizability and declarative forms. JSON Schema + UI Schema." [jsonforms discourse](https://jsonforms.discourse.group/t/compare-to-react-jsonschema-form/553)
-- Comparativa 2026: rjsf 900K downloads/semana (más popular), JSONForms 238K (más customizable). Ambos MIT. [faun.dev](https://faun.dev/toolbox/json-forms-vs-react-jsonschema-form/)
+**Costo asumido:** algunos campos del dominio, como las matrices legales de SST,
+requieren renderers propios.
 
-**Trade-off:** JSONForms requiere a veces escribir renderers custom cuando un campo no encaja en los sets default (ej: campos SST tipo matriz legal). Vale la pena por tener Vue 3 nativo.
+**Implementación:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` al inicio;
+`@jsonforms/vue-vuetify` si se adopta Vuetify como sistema de diseño.
 
-**Implementación:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` para arrancar, `@jsonforms/vue-vuetify` si queremos Vuetify como design system.
+### 5.3 Extensión opcional de asistencia
 
-### 5.3 Extensión opcional de asistencia: DSPy como núcleo, LangChain opcional para tooling
+**Decisión:** el asistente de autoría queda fuera del núcleo. Cuando se implemente, usa DSPy.
 
-**Decisión:** DSPy para el asistente interno de la extensión opcional (generación de forms, asistencia, validación cruzada). LangChain/LangGraph descartado como core (overhead, integración no es nuestro cuello de botella).
+**Justificación:** el caso de uso es generar JSON Schema a partir de texto normativo,
+con un conjunto de datos disponible (decretos y resoluciones) y una métrica verificable
+(schema válido y campos cubiertos). DSPy optimiza el prompt contra esa métrica y se
+recompila cuando cambia el modelo, que es el fallo característico de los prompts
+escritos a mano.
 
-**Evidencia:**
-- DSPy es un compiler para prompts: declaras `Signature` + `Module`, el optimizer (`MIPROv2`) busca instrucciones automáticamente y se adapta al cambiar de modelo. [randomcommits.com](https://randomcommits.com/dspy-vs-langchain)
-- Caso real (randomcommits): cambiaron gpt-3.5 → gpt-4-turbo y todos los 50 LangChain chains fallaron porque los prompts eran strings hardcoded. DSPy re-compila automáticamente.
-- Caso benchmark: 0.83 → 0.90 exact-match al migrar a DSPy en clasificación multi-categoría. Costo: $12 de compile, 30 min.
-- "DSPy vs LangChain no son el mismo layer. DSPy optimiza el prompt dado un dataset. LangChain conecta providers + tools + retrievers." [tinyagents.dev](https://tinyagents.dev/vs/dspy-vs-langchain)
-- Caso de uso nuestro = agente que genera JSON Schema desde texto normativo. Tenemos dataset (textos de Decretos/Resoluciones), tenemos métrica (schema válido + campos cubiertos). **DSPy ajusta perfecto.**
-- LangChain solo justificaría si necesitáramos conectores a 600+ herramientas externas. No es nuestro caso.
+**Alcance:** ninguna capa del núcleo depende de esta extensión.
 
-**Regla decisión:** si en el futuro queremos que un agente externo (LaserBeam/MCP) construya forms en regulation-ledger, exponemos los tool-calls de LangChain o una API REST simple. Pero el agente interno es DSPy.
+### 5.4 Inferencia de la extensión opcional
 
-### 5.4 Inferencia de la extensión opcional: configurable cloud + self-hosted, default self-hosted para datos sensibles
+**Decisión:** arquitectura neutral, con inferencia local por defecto y proveedores en la
+nube como alternativa configurable.
 
-**Decisión:** arquitectura neutral con **Ollama self-hosted como default**, OpenAI/Anthropic opcional.
+**Justificación:** los datos de cumplimiento SST son sensibles bajo la Ley 1581 de Habeas
+Data. La inferencia local mantiene los datos en el host del cliente; un proveedor en la
+nube exige acuerdo de tratamiento y evaluación de jurisdicción.
 
-**Evidencia de costos (septiembre 2026):**
-| Volumen | OpenAI GPT-5.6 Luna | Ollama rentado (RTX 4090) | Ollama propio |
-|---|---|---|---|
-| 5M tokens/mes | ~$2.50 | ~$6 | ~$97 (capex) |
-| 100M tokens/mes | ~$50 | ~$121 | ~$115 |
-| 1B tokens/mes | ~$800 | ~$1,207 | — |
+**Implementación:** proveedor y modelo configurables en `config.yaml`, documentados en
+`.env.example`. El asistente se distribuye apagado.
 
-[markaicode.com / sept 2026](https://markaicode.com/pricing/ollama-vs-openai-api-pricing)
+### 5.5 Alertas de vencimientos
 
-**Lectura:** Self-host rentado **nunca gana** vs OpenAI más barato. Self-host propio **gana recién arriba de ~100M tokens/mes**. Para regulation-ledger (auditoría SST, normativas colombianas), el cuello es compliance, no throughput. Usar cloud barato (GPT-5.6 Luna, $0.50/1M blended) hasta ~100M tokens/mes, después self-host si la adopción lo justifica.
+**Decisión:** job de polling diario sobre la tabla `vencimientos`.
 
-**Privacidad:** Ollama local = datos nunca salen del host. Compatible con normativas colombianas (Ley 1581 Habeas Data). OpenAI/Anthropic cloud = requiere DPA + evaluación de jurisdicción.
+**Justificación:** los vencimientos dependen del tiempo, no de un evento externo. Un
+planificador con cadencia fija cubre el caso sin infraestructura de eventos. Si el
+catálogo de alertas crece, la decisión se revisa.
 
-**Recomendación operativa:**
-1. Default MVP: Ollama local con modelo open (Llama 3.1 8B o similar) para cero dependencia cloud.
-2. Cliente enterprise que pide modelos grandes: OpenAI/Anthropic vía API, configurable en `config.yaml`.
-3. Documentado como "Self-hosted default, configurable a cloud" en el `.env.example`.
+**Monitoreo:** el ledger-api expone `last_cron_run_at` en su endpoint de salud, con una
+métrica para alertar si el job no corre en 24 h.
 
-### 5.5 Alertas de vencimientos: cron polling diario + tabla `vencimientos`
+### 5.6 Integración con agentes externos
 
-**Decisión:** mantiene el job polling del SPEC v0.1 (línea 286-302). No webhook externo.
+**Decisión:** API REST para el conector MSP en V2.0; servidor MCP como adaptador sobre esa
+misma API en V2.1.
 
-**Evidencia:**
-- Cron polling para tareas recurrentes a cadencia fija es el caso ideal. "Cron is fine for recurring system tasks like cache warming, report generation, and log rotation. It runs on a fixed cadence and does its job well." [posthook.io](https://posthook.io/compare/cron-vs-durable-scheduling)
-- Si tu trabajo es "ejecutar este SQL cada hora a medianoche", cron es la respuesta. Webhooks tienen sentido cuando el productor del evento dispara la notificación (no aplica para vencimientos que dependen del tiempo).
-- Limitación a tener en cuenta: "every concern gets its own polling query and its own cron job. At five or ten concerns, you have a growing set of pollers." Si regulation-ledger llega a muchos tipos de alerta, reconsiderar. Por ahora: 1 poller (vencimientos) es trivial.
-
-**Postura de monitoreo añadida:** cron no trae alerting por default. Si el job falla silencioso, nadie se entera. **Agregar health-check endpoint en el ledger-api que devuelva `last_cron_run_at`** y metricas Prometheus para alertar si el job no corre en 24h+5min.
-
-### 5.6 Agente externo: REST API primero, MCP server en V2.1
-
-**Decisión:** mantiene del SPEC v0.1: REST API como conector MSP/AI en V2.1, MCP server en fase posterior.
-
-**Evidencia (cambia el landscape respecto a oct-2025):**
-- MCP spec v2025-11-25 ya está estable, OAuth 2.0 Resource Server compliance, soporte enterprise. [modelcontextprotocol.info](https://modelcontextprotocol.info/blog/first-mcp-anniversary)
-- IBM App Connect 13.0.8 production-ready: "expose your REST APIs as MCP tools without code changes". [ibm.com](https://www.ibm.com/docs/en/app-connect/13.0.x?topic=solutions-developing-mcp-tools)
-- REST sigue siendo la elección práctica inicial: "REST first, MCP después" sigue vigente porque REST tiene el 100% de los casos MSP cubiertos, y "exponer REST como MCP tools" es trivial cuando se quiera.
-
-**Postura corregida:** en lugar de "REST primero, MCP después", la decisión cerrada es **REST para V2.0 (conector MSP), MCP como adaptador delgado sobre REST en V2.1**. La especificación MCP v2025-11-25 es estable; agregarlo como wrapper es 1 sprint de trabajo, no un mes.
-
----
-
-## 6. Tareas Pendientes (v0.2)
-
-> Las tareas marcadas ✅ están resueltas en la sección 5.
-
-### Investigación cerrada
-
-- ✅ [x] Evaluar rjsf vs JSONForms — **resuelto en 5.2: JSONForms Vue**
-- ✅ [x] Evaluar DSPy vs LangChain — **resuelto en 5.3: DSPy como core**
-- ✅ [x] Comparar costo/beneficio Ollama self-hosted vs. OpenAI API — **resuelto en 5.4**
-- ✅ [x] Evaluar Form.io vs react-jsonschema-form para el caso MSP — **resuelto en 5.2: rjsf descartado porque no soporta Vue. Form.io no se considera.**
-
-### Investigación abierta
-
-- [ ] Profundizar en vencimientos específicos (arqueos, extintores, escaleras — periodicidad exacta). Acción: consolidar tabla de vencimientos con referencias a NFPA, Icontec, y normativa sectorial.
-- [ ] Listado exacto de CIIU por sector. Acción: extraer los CIIUs asociados a cada sector (construcción, salud, manufactura, industria) desde la tabla de actividades del DANE.
-- [ ] Investigación de templates en otros países (MX: NOM-035, PE: RM). Acción: evaluar si las normas mexicanas NOM-035 (factores psicosociales), STPS, y peruanas RM-Numeral aplican a la arquitectura de templates, o si son vertical-specific para futura expansión.
-- [ ] Cron monitoring operacional. Acción: implementar endpoint `GET /health/cron` que devuelva `last_cron_run_at` y configurar alert Prometheus si supera 24h+5min. (Derivado de 5.5)
+**Justificación:** REST cubre los casos de integración del MSP y es la superficie sobre la
+que se construye cualquier otro protocolo. El adaptador MCP no duplica lógica.

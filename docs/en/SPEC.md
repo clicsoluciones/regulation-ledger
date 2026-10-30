@@ -521,9 +521,8 @@ to regulation-ledger to build forms automatically.
 | ORM | Prisma | Type-safe, migrations, multi-tenant |
 | Auth | Lucia | Multi-tenant with roles, self-hosted |
 | Form rendering | JSONForms Vue | JSON Schema standard for Vue |
-| AI | DSPy + configurable LLM | Declarative, swappable |
-| API | REST + MCP (future) | MSP/AI connector |
-| Hosting | Self-hosted (Docker) | User wants cash, not SaaS |
+| API | REST + MCP (future) | MSP connector |
+| Hosting | Self-hosted (Docker) | Deployed on the operator's own infrastructure |
 | CI/CD | GitHub Actions | Repo on GitHub |
 
 ---
@@ -547,140 +546,108 @@ to regulation-ledger to build forms automatically.
 - [ ] Compliance dashboard (% completed)
 - [ ] Dynamic menu from registry
 
-### Phase 3 — V2.0 (AI Agent)
-- [ ] DSPy setup with configurable LLM
-- [ ] Form generation agent from regulation text
-- [ ] In-form filling assistance (inline chat)
-- [ ] Cross-regulation validation
+### Phase 3 — V2.0 (MSP connector + multi-tenant)
+- [ ] MSP REST API connector
+- [ ] MCP server as an adapter over the API
+- [ ] White-labeling (logo, colors, domain)
+- [ ] Bulk operations for MSPs
 
-### Phase 4 — V2.1 (MSP + Multi-tenant)
+### Phase 4 — V2.1 (Multi-region)
 - [ ] MSP REST API connector
 - [ ] MCP server for external agent
 - [ ] White-labeling (logo, colors, domain)
 - [ ] Bulk operations for MSPs
 
-### Phase 5 — V2.2 (Multi-region)
+### Phase 5 — V2.2 (International coverage)
 - [ ] MX, PE jurisdiction
 - [ ] International templates
 - [ ] UI translations
 
+> The optional assistance extension (section 5.3) is not part of these phases nor of
+> the funded scope.
+
 ---
 
-## 5. Closed Architectural Decisions (v0.2)
+## 5. Architecture decisions
 
-> Decisions taken after external research. Citations included where applicable.
+Closed decisions that constrain the implementation. Each one records the decision, its
+technical rationale and its effect on the code.
 
-### 5.1 Multi-tenancy: shared schema with `tenant_id` + Row-Level Security (RLS)
+### 5.1 Multi-tenancy: shared schema with `tenant_id` and Row-Level Security
 
-**Decision:** Shared schema with `tenant_id` column in every table, **enforced by PostgreSQL RLS** (not just application convention).
+**Decision:** shared schema with a `tenant_id` column on every table, **enforced by
+PostgreSQL RLS**, not by application convention.
 
-**Evidence:**
-- 2025-2026 consensus (Streamkap, AWS, dev.to, Supabase): "For the vast majority of modern SaaS applications, the shared-schema model using a `tenant_id` column is the way to go. It provides the clearest path to scalability and cost savings." [streamkap.com](https://streamkap.com/resources-and-guides/postgresql-cdc-multi-tenant)
-- RLS in PostgreSQL is production-grade: AWS demonstrates cross-tenant writes return `UPDATE 0` when the policy blocks them, no additional code required if you don't rely on convention. [aws.amazon.com](https://aws.amazon.com/blogs/database/multi-tenant-data-isolation-with-postgresql-row-level-security/)
-- Honest trade-off: schema-per-tenant produces 100K instances impossible to operate; shared schema scales, RLS protects.
+**Rationale:** schema-per-tenant is not operable at scale. A shared schema keeps a single
+database and delegates isolation to the engine, which enforces it even when the
+application code has a defect.
 
 **Canonical implementation:**
+
 ```sql
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE companies FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON companies
   USING (tenant_id = current_setting('app.current_tenant')::uuid);
 ```
-Every request sets `SET LOCAL app.current_tenant = '<uuid>'` before executing. Without manual exception, no leaks.
+
+Every request runs `SET LOCAL app.current_tenant = '<uuid>'` before the query.
 
 **Tables with `tenant_id`:** companies, company_forms, form_submissions, vencimientos, alerts.
-**Global tables (no `tenant_id`):** form_definitions, categories, templates, form_versions (global registry, readable by all tenants).
+**Global tables:** form_definitions, categories, templates, form_versions — shared
+registry, readable by all tenants.
 
-### 5.2 Form renderer: JSONForms Vue
+### 5.2 Form rendering: JSONForms
 
-**Decision:** JSONForms Vue (`@jsonforms/vue`), not react-jsonschema-form (rjsf).
+**Decision:** `@jsonforms/vue` with JSON Schema + UI Schema.
 
-**Change from SPEC v0.1 recommendation:** SPEC v0.1 said "rjsf, more popular". That was incorrect: rjsf **is React-only**. The recommendation is invalidated because the stack is already defined as Vue 3.
+**Rationale:** it is the option with official bindings for Vue 3, the project's framework,
+and keeps the same core as its React and Angular variants.
 
-**Evidence:**
-- rjsf issue [#4482](https://github.com/rjsf-team/react-jsonschema-form/issues/4482) (official maintainers): "You may just want to build a new system called Vue Json Schema Form" — there is no official Vue version of rjsf.
-- JSONForms Vue 3.8.0 (jun-2026): first-class, MIT, official Vue 3 bindings, same core as React/Angular. [eclipsesource/jsonforms](https://github.com/eclipsesource/jsonforms)
-- JSONForms Community: "focuses on customizability and declarative forms. JSON Schema + UI Schema." [jsonforms discourse](https://jsonforms.discourse.group/t/compare-to-react-jsonschema-form/553)
-- Comparison 2026: rjsf 900K weekly downloads (more popular), JSONForms 238K (more customizable). Both MIT. [faun.dev](https://faun.dev/toolbox/json-forms-vs-react-jsonschema-form/)
+**Accepted cost:** some domain fields, such as occupational-safety legal matrices, require
+custom renderers.
 
-**Trade-off:** JSONForms sometimes requires custom renderers when a field doesn't fit the default sets (e.g. legal matrix fields in SST). Worth it for native Vue 3.
+**Implementation:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` first;
+`@jsonforms/vue-vuetify` if Vuetify is adopted as the design system.
 
-**Implementation:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` to start, `@jsonforms/vue-vuetify` if we want Vuetify as the design system.
+### 5.3 Optional assistance extension
 
-### 5.3 Optional assistance extension: DSPy as core, LangChain optional for tooling
+**Decision:** the authoring assistant stays out of the core. When implemented, it uses DSPy.
 
-**Decision:** DSPy for the internal agent (form generation, assistance, cross-validation). LangChain/LangGraph discarded as core (overhead, integration is not our bottleneck).
+**Rationale:** the use case is generating JSON Schema from regulatory text, with an
+available dataset (decrees and resolutions) and a verifiable metric (valid schema and
+covered fields). DSPy optimises the prompt against that metric and recompiles when the
+model changes, which is the characteristic failure of hand-written prompts.
 
-**Evidence:**
-- DSPy is a compiler for prompts: you declare `Signature` + `Module`, the optimizer (`MIPROv2`) automatically searches for instructions and adapts to model changes. [randomcommits.com](https://randomcommits.com/dspy-vs-langchain)
-- Real case (randomcommits): they switched gpt-3.5 → gpt-4-turbo and all 50 LangChain chains failed because prompts were hardcoded strings. DSPy re-compiles automatically.
-- Benchmark case: 0.83 → 0.90 exact-match when migrating to DSPy in multi-category classification. Cost: $12 of compile, 30 min.
-- "DSPy vs LangChain are not the same layer. DSPy optimizes the prompt given a dataset. LangChain connects providers + tools + retrievers." [tinyagents.dev](https://tinyagents.dev/vs/dspy-vs-langchain)
-- Our use case = agent that generates JSON Schema from regulatory text. We have a dataset (Decree/Resolution texts), we have a metric (valid schema + covered fields). **DSPy fits perfectly.**
-- LangChain would only be justified if we needed connectors to 600+ external tools. Not our case.
+**Scope:** no core layer depends on this extension.
 
-**Decision rule:** if in the future we want an external agent (LaserBeam/MCP) to build forms in regulation-ledger, we expose LangChain tool-calls or a simple REST API. But the internal agent is DSPy.
+### 5.4 Inference for the optional extension
 
-### 5.4 Optional extension inference: configurable cloud + self-hosted, default self-hosted for sensitive data
+**Decision:** provider-neutral architecture, local inference by default and cloud
+providers as a configurable alternative.
 
-**Decision:** neutral architecture with **Ollama self-hosted as default**, OpenAI/Anthropic optional.
+**Rationale:** occupational-safety compliance data is sensitive under Colombian Law 1581
+on personal data protection. Local inference keeps data on the customer's host; a cloud
+provider requires a data processing agreement and a jurisdiction review.
 
-**Cost evidence (September 2026):**
-| Volume | OpenAI GPT-5.6 Luna | Ollama rented (RTX 4090) | Ollama owned |
-|---|---|---|---|
-| 5M tokens/month | ~$2.50 | ~$6 | ~$97 (capex) |
-| 100M tokens/month | ~$50 | ~$121 | ~$115 |
-| 1B tokens/month | ~$800 | ~$1,207 | — |
+**Implementation:** provider and model configurable in `config.yaml`, documented in
+`.env.example`. The assistant ships disabled.
 
-[markaicode.com / sept 2026](https://markaicode.com/pricing/ollama-vs-openai-api-pricing)
+### 5.5 Expiration alerts
 
-**Reading:** Self-host rented **never wins** vs OpenAI cheapest. Self-host owned **only wins above ~100M tokens/month**. For regulation-ledger (SST audit, Colombian regulations), the bottleneck is compliance, not throughput. Use cheap cloud (GPT-5.6 Luna, $0.50/1M blended) up to ~100M tokens/month, then self-host if adoption justifies it.
+**Decision:** daily polling job over the `vencimientos` table.
 
-**Privacy:** Ollama local = data never leaves the host. Compatible with Colombian regulations (Ley 1581 Habeas Data). OpenAI/Anthropic cloud = requires DPA + jurisdiction evaluation.
+**Rationale:** expirations depend on time, not on an external event. A fixed-cadence
+scheduler covers the case without event infrastructure. If the alert catalogue grows,
+the decision is revisited.
 
-**Operational recommendation:**
-1. MVP default: Ollama local with open model (Llama 3.1 8B or similar) for zero cloud dependency.
-2. Enterprise client requesting large models: OpenAI/Anthropic via API, configurable in `config.yaml`.
-3. Documented as "Self-hosted default, configurable to cloud" in `.env.example`.
+**Monitoring:** the ledger-api exposes `last_cron_run_at` on its health endpoint, with a
+metric to alert if the job does not run within 24 h.
 
-### 5.5 Expiration alerts: daily cron polling + `vencimientos` table
+### 5.6 External agent integration
 
-**Decision:** keeps the polling job from SPEC v0.1 (line 286-302). No external webhook.
+**Decision:** REST API for the MSP connector in V2.0; MCP server as an adapter over that
+same API in V2.1.
 
-**Evidence:**
-- Cron polling for recurring tasks at fixed cadence is the ideal case. "Cron is fine for recurring system tasks like cache warming, report generation, and log rotation. It runs on a fixed cadence and does its job well." [posthook.io](https://posthook.io/compare/cron-vs-durable-scheduling)
-- If your work is "execute this SQL every hour at midnight", cron is the answer. Webhooks make sense when the event producer triggers the notification (doesn't apply for time-dependent expirations).
-- Limitation to watch: "every concern gets its own polling query and its own cron job. At five or ten concerns, you have a growing set of pollers." If regulation-ledger reaches many alert types, reconsider. For now: 1 poller (expirations) is trivial.
-
-**Added monitoring posture:** cron doesn't have alerting by default. If the job fails silently, nobody finds out. **Add a health-check endpoint in ledger-api that returns `last_cron_run_at`** and Prometheus metrics to alert if the job doesn't run in 24h+5min.
-
-### 5.6 External agent: REST API first, MCP server in V2.1
-
-**Decision:** keeps from SPEC v0.1: REST API as MSP/AI connector in V2.1, MCP server in a later phase.
-
-**Evidence (landscape changed since oct-2025):**
-- MCP spec v2025-11-25 is already stable, OAuth 2.0 Resource Server compliance, enterprise support. [modelcontextprotocol.info](https://modelcontextprotocol.info/blog/first-mcp-anniversary)
-- IBM App Connect 13.0.8 production-ready: "expose your REST APIs as MCP tools without code changes". [ibm.com](https://www.ibm.com/docs/en/app-connect/13.0.x?topic=solutions-developing-mcp-tools)
-- REST remains the practical initial choice: "REST first, MCP later" still holds because REST covers 100% of MSP cases, and "exposing REST as MCP tools" is trivial when desired.
-
-**Corrected stance:** instead of "REST first, MCP later", the closed decision is **REST for V2.0 (MSP connector), MCP as thin adapter over REST in V2.1**. The MCP spec v2025-11-25 is stable; adding it as a wrapper is 1 sprint of work, not a month.
-
----
-
-## 6. Pending Tasks (v0.2)
-
-> Tasks marked ✅ are resolved in section 5.
-
-### Closed research
-
-- ✅ [x] Evaluate rjsf vs JSONForms — **resolved in 5.2: JSONForms Vue**
-- ✅ [x] Evaluate DSPy vs LangChain — **resolved in 5.3: DSPy as core**
-- ✅ [x] Compare Ollama self-hosted vs. OpenAI API cost/benefit — **resolved in 5.4**
-- ✅ [x] Evaluate Form.io vs JSONForms for MSP use case — **resolved in 5.2: rjsf discarded because it doesn't support Vue. Form.io not considered.**
-
-### Open research
-
-- [ ] Deepen specific expirations (fire extinguisher checks, ladders — exact periodicity). Action: consolidate the expirations table with references to NFPA, Icontec, and sector-specific regulations.
-- [ ] Exact CIIU code listing by sector. Action: extract CIIUs associated with each sector (construction, health, manufacturing, industrial) from the DANE activities table.
-- [ ] Research templates in other countries (MX: NOM-035, PE: RM). Action: evaluate whether Mexican NOM-035 (psychosocial factors), STPS, and Peruvian RM-Numeral regulations apply to the templates architecture, or are vertical-specific for future expansion.
-- [ ] Cron operational monitoring. Action: implement `GET /health/cron` endpoint that returns `last_cron_run_at` and configure Prometheus alert if it exceeds 24h+5min. (Derived from 5.5)
+**Rationale:** REST covers the MSP integration cases and is the surface any other protocol
+is built on. The MCP adapter does not duplicate logic.

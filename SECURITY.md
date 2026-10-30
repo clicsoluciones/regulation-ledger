@@ -13,7 +13,7 @@ We take security seriously. If you discover a security vulnerability in `regulat
 
 **Do not open a public issue for security vulnerabilities.**
 
-Send an email to: yaquimartinez@gmail.com
+Send an email to: mono079790@gmail.com
 
 Please include:
 - Description of the vulnerability

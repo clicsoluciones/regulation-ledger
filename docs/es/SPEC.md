@@ -309,9 +309,14 @@ async function verificarVencimientos() {
 - **Notificación push** (futuro)
 - **Resumen semanal** (futuro)
 
-### 2.5 Bloque 4 — Agente IA
+### 2.5 Bloque 4 (extensión opcional) — Asistente de autoría
 
 **Responsabilidad:** Construir formularios nuevos, asistir al usuario, validar cruces normativos.
+
+> **Alcance.** Este bloque es una extensión opcional, apagada por defecto y no
+> necesaria para operar ninguna capa core. Las capas 1-3 y 5 (registry, template engine,
+> snapshots/vencimientos, evidencia y conector MSP) son deterministas y funcionan sin él.
+> Se desarrolla de forma independiente del camino principal.
 
 #### 4a. Generación de formularios por normativa
 
@@ -602,9 +607,9 @@ Cada request setea `SET LOCAL app.current_tenant = '<uuid>'` antes de ejecutar. 
 
 **Implementación:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` para arrancar, `@jsonforms/vue-vuetify` si queremos Vuetify como design system.
 
-### 5.3 Agente IA: DSPy como núcleo, LangChain opcional para tooling
+### 5.3 Extensión opcional de asistencia: DSPy como núcleo, LangChain opcional para tooling
 
-**Decisión:** DSPy para el agente interno (generación de forms, asistencia, validación cruzada). LangChain/LangGraph descartado como core (overhead, integración no es nuestro cuello de botella).
+**Decisión:** DSPy para el asistente interno de la extensión opcional (generación de forms, asistencia, validación cruzada). LangChain/LangGraph descartado como core (overhead, integración no es nuestro cuello de botella).
 
 **Evidencia:**
 - DSPy es un compiler para prompts: declaras `Signature` + `Module`, el optimizer (`MIPROv2`) busca instrucciones automáticamente y se adapta al cambiar de modelo. [randomcommits.com](https://randomcommits.com/dspy-vs-langchain)
@@ -616,7 +621,7 @@ Cada request setea `SET LOCAL app.current_tenant = '<uuid>'` antes de ejecutar. 
 
 **Regla decisión:** si en el futuro queremos que un agente externo (LaserBeam/MCP) construya forms en regulation-ledger, exponemos los tool-calls de LangChain o una API REST simple. Pero el agente interno es DSPy.
 
-### 5.4 AI inference: configurable cloud + self-hosted, default self-hosted para datos sensibles
+### 5.4 Inferencia de la extensión opcional: configurable cloud + self-hosted, default self-hosted para datos sensibles
 
 **Decisión:** arquitectura neutral con **Ollama self-hosted como default**, OpenAI/Anthropic opcional.
 

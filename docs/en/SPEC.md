@@ -309,9 +309,14 @@ async function checkExpirations() {
 - **Push notification** (future)
 - **Weekly summary** (future)
 
-### 2.5 Block 4 — AI Agent
+### 2.5 Block 4 (optional extension) — Authoring assistant
 
 **Responsibility:** Build new forms, assist the user, validate cross-regulatory compliance.
+
+> **Scope.** This block is an optional extension, off by default and not required to
+> operate any core layer. Layers 1-3 and 5 (registry, template engine,
+> snapshots/expirations, evidence and MSP connector) are deterministic and work without
+> it. It is developed independently of the main path.
 
 #### 4a. Form generation from regulation
 
@@ -602,7 +607,7 @@ Every request sets `SET LOCAL app.current_tenant = '<uuid>'` before executing. W
 
 **Implementation:** `@jsonforms/vue` + `@jsonforms/vue-vanilla` to start, `@jsonforms/vue-vuetify` if we want Vuetify as the design system.
 
-### 5.3 AI Agent: DSPy as core, LangChain optional for tooling
+### 5.3 Optional assistance extension: DSPy as core, LangChain optional for tooling
 
 **Decision:** DSPy for the internal agent (form generation, assistance, cross-validation). LangChain/LangGraph discarded as core (overhead, integration is not our bottleneck).
 
@@ -616,7 +621,7 @@ Every request sets `SET LOCAL app.current_tenant = '<uuid>'` before executing. W
 
 **Decision rule:** if in the future we want an external agent (LaserBeam/MCP) to build forms in regulation-ledger, we expose LangChain tool-calls or a simple REST API. But the internal agent is DSPy.
 
-### 5.4 AI inference: configurable cloud + self-hosted, default self-hosted for sensitive data
+### 5.4 Optional extension inference: configurable cloud + self-hosted, default self-hosted for sensitive data
 
 **Decision:** neutral architecture with **Ollama self-hosted as default**, OpenAI/Anthropic optional.
 

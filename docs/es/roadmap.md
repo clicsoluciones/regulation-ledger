@@ -54,29 +54,30 @@ El sistema alerta antes de que venza un documento o certificación.
 
 ---
 
-## Fase 4: Agente IA — Mes 4-5
+## Fase 4: Evidencia y snapshots normativos — Mes 4-6
 
-**Meta:** Asistencia IA durante diligenciamiento y generación de formularios.
+**Meta:** Traza de evidencia verificable y control de vigencia normativa.
 
 ### Entregables
-- DSPy integrado con LLM configurable (OpenAI / Ollama)
-- Generación de formularios desde texto normativo bruto
-- Asistencia durante el diligenciamiento (suggestions)
-- Validación cruzada cuando cambian las normas
-- Detección de formularios obsoletos o reemplazados
+- Cadena de hashes append-only sobre presentaciones y documentos de soporte
+- Export a JSON plano: el historial completo se puede leer sin la aplicación
+- Snapshot inmutable por versión de norma
+- Detección de formularios afectados cuando una norma cambia
+- Revalidación cruzada de reglas cuando cambia la norma
 
 ### Criterio de éxito
-Un formulario nuevo generado desde un texto de ley en menos de 5 minutos.
+Un auditor puede reconstruir qué se presentó, cuándo y contra qué versión de la norma,
+usando solo el export.
 
 ---
 
-## Fase 5: Conector MSP — Mes 5-6
+## Fase 5: Conector MSP — Mes 7-12
 
 **Meta:** API para MSPs que gestionan múltiples empresas cliente.
 
 ### Entregables
 - API REST con autenticación por API key
-- Servidor MCP para agentes IA externos
+- Servidor MCP para integraciones externas
 - Dashboard MSP: todas las empresas cliente, métricas agregadas
 - Operaciones en masa (crear empresa, asignar template, importar datos)
 - Webhooks para notificaciones externas
@@ -91,5 +92,14 @@ Un MSP gestiona 50 empresas desde una sola API.
 | Fecha | Hito |
 |-------|------|
 | mes 2 | Form Builder funcional + wizard |
-| mes 4 | Vencimientos + IA básica |
-| mes 6 | Conector MSP + demo pública |
+| mes 4 | Vencimientos + snapshots normativos |
+| mes 6 | Cadena de evidencia + export |
+| mes 12 | Conector MSP + demo pública |
+
+## Extensión opcional: asistencia en la autoría de formularios
+
+Fuera del camino principal y sin dependencia de las capas core, existe una extensión
+opcional con un asistente local para la autoría de formularios: se ejecuta apagada por
+defecto, requiere un modelo alojado localmente y no es necesaria para operar ninguna capa
+core. Se desarrolla como contribución de la comunidad, no como parte de las fases
+anteriores.

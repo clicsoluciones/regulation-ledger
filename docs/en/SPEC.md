@@ -73,11 +73,11 @@ Not 113 forms. Approximately 30 unique forms organized by the PHVA cycle (Decret
 Three independent layers:
 ```
 ┌─────────────────────────────────────────────────┐
-│  EVIDENCE AND SNAPSHOTS — Verifiable record      │
+│  EVIDENCE AND SNAPSHOTS: verifiable record       │
 ├─────────────────────────────────────────────────┤
-│  TEMPLATE ENGINE — Adaptive menu by profile      │
+│  TEMPLATE ENGINE: adaptive menu by profile       │
 ├─────────────────────────────────────────────────┤
-│  FORM BUILDER ENGINE — Form registry            │
+│  FORM BUILDER ENGINE: form registry              │
 │  (pure data, no business logic)                │
 └─────────────────────────────────────────────────┘
 ```

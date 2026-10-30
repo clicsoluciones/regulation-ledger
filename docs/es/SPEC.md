@@ -73,11 +73,11 @@ No son 113 formularios. Son ~30 formularios únicos organizados por el ciclo PHV
 Tres capas independientes:
 ```
 ┌─────────────────────────────────────────────────┐
-│  EVIDENCIA Y SNAPSHOTS — Registro verificable    │
+│  EVIDENCIA Y SNAPSHOTS: registro verificable     │
 ├─────────────────────────────────────────────────┤
-│  MOTOR DE TEMPLATES — Menú adaptativo por perfil │
+│  MOTOR DE TEMPLATES: menú adaptativo por perfil  │
 ├─────────────────────────────────────────────────┤
-│  FORM BUILDER ENGINE — Registry de formularios   │
+│  FORM BUILDER ENGINE: registry de formularios    │
 │  (datos puros, sin lógica de negocio)           │
 └─────────────────────────────────────────────────┘
 ```
